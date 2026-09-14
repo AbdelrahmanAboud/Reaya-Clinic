@@ -1,0 +1,186 @@
+@model Doctor
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Edit Doctor – Rayaah Clinic</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="~/css/dashboard.css" />
+</head>
+<body>
+<div class="shell">
+
+    @Html.Partial("_Sidebar")
+
+    <!-- Main -->
+    <div class="main">
+      <header class="topbar">
+    <form method="get" asp-controller="Doctors" asp-action="Index" style="flex-grow: 1; display: flex;">
+        <div class="search-bar" style="width: 100%;">
+            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 5 5"/></svg>
+            <input type="search" name="search" value="@Context.Request.Query["search"]" placeholder="Search doctors..." style="width: 100%; border: none; outline: none; background: transparent;" onchange="this.form.submit()" />
+        </div>
+    </form>
+    
+      </header>
+
+      <div class="content">
+        <div style="margin-bottom: 8px;">
+            <a asp-controller="Doctors" asp-action="Index" style="text-decoration:none; font-size:13px; font-weight:700; color:#0284c7; display:inline-flex; align-items:center; gap:6px;">
+                <i class="bi bi-arrow-left"></i> Back to Doctors
+            </a>
+        </div>
+
+        <div class="page-title">
+            <h1>Edit Doctor</h1>
+            <p>Update doctor profile and clinic information</p>
+        </div>
+
+        <form asp-controller="Doctors" asp-action="CurrentEdit" method="post" enctype="multipart/form-data">
+            <input type="hidden" asp-for="Id" />
+            <input type="hidden" asp-for="UserId" />
+            <input type="hidden" asp-for="ImagePath" />
+            <div asp-validation-summary="All" class="text-danger" style="margin-bottom:12px; font-size:12px; font-weight:700; list-style:none;"></div>
+
+            <div class="form-card" style="margin-top:0;">
+                @{
+                    string initials = "DR";
+                    if (!string.IsNullOrEmpty(Model.Name))
+                    {
+                        var nameParts = Model.Name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                        if (nameParts.Length >= 2)
+                        {
+                            initials = $"{char.ToUpper(nameParts[0][0])}{char.ToUpper(nameParts[1][0])}";
+                        }
+                        else if (nameParts.Length == 1)
+                        {
+                            initials = nameParts[0].Substring(0, Math.Min(2, nameParts[0].Length)).ToUpper();
+                        }
+                    }
+                }
+                <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 24px; padding-bottom: 20px; border-bottom: 1px solid #f1f5f9;">
+                    <div style="position: relative; cursor: pointer;" onclick="document.getElementById('imageFileInput').click()">
+                        <div id="imagePreview" style="width: 80px; height: 80px; border-radius: 50%; overflow:hidden; border: 3px solid #e2e8f0; transition: all 0.2s;">
+                            @if (!string.IsNullOrEmpty(Model.ImagePath))
+                            {
+                                <img id="currentImage" src="@Model.ImagePath" alt="@Model.Name" style="width:100%;height:100%;object-fit:cover;" />
+                            }
+                            else
+                            {
+                                <img id="currentImage" src="~/images/user_default.jpg" alt="@Model.Name" style="width:100%;height:100%;object-fit:cover;" />
+                            }
+                        </div>
+                        <div style="position: absolute; top: 0; left: 0; width: 80px; height: 80px; border-radius: 50%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s;" class="image-overlay">
+                            <i class="bi bi-camera" style="color: white; font-size: 24px;"></i>
+                        </div>
+                    </div>
+                    <div>
+                        <h2 style="font-size: 18px; font-weight: 800; color: #0f172a; margin: 0;"><span>Dr.</span>@Model.Name</h2>
+                        <p style="font-size: 13px; color: #64748b; margin: 4px 0 0;">@Model.Specialization · Rayaah Clinic</p>
+                    </div>
+                </div>
+
+                <div class="field" style="margin-bottom: 16px; display: none;">
+                    <label asp-for="ImageFile">Update Profile Image</label>
+                    <input type="file" id="imageFileInput" asp-for="ImageFile" accept="image/*" class="form-control" onchange="previewImage(this)" />
+                </div>
+
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;">
+                    <div class="field">
+                        <label asp-for="Name">Doctor Name</label>
+                        <input asp-for="Name" type="text" />
+                        <span asp-validation-for="Name" class="text-danger" style="font-size:11px;"></span>
+                    </div>
+
+                    <div class="field">
+                        <label asp-for="Specialization">Specialization</label>
+                        <select asp-for="Specialization">
+                            <option value="">Select specialization</option>
+                            <option value="Cardiology">Cardiology</option>
+                            <option value="Neurology">Neurology</option>
+                            <option value="Pediatrics">Pediatrics</option>
+                            <option value="Orthopedics">Orthopedics</option>
+                            <option value="Dermatology">Dermatology</option>
+                            <option value="Dentistry">Dentistry</option>
+                        </select>
+                        <span asp-validation-for="Specialization" class="text-danger" style="font-size:11px;"></span>
+                    </div>
+
+                    <div class="field">
+                        <label asp-for="Email">Email Address</label>
+                        <input asp-for="Email" type="email" />
+                        <span asp-validation-for="Email" class="text-danger" style="font-size:11px;"></span>
+                    </div>
+
+                    <div class="field">
+                        <label asp-for="Phone">Phone Number</label>
+                        <input asp-for="Phone" type="tel" />
+                        <span asp-validation-for="Phone" class="text-danger" style="font-size:11px;"></span>
+                    </div>
+
+                    <div class="field">
+                        <label asp-for="ConsultationFee">Consultation Fee (EGP)</label>
+                        <input asp-for="ConsultationFee" type="number" />
+                        <span asp-validation-for="ConsultationFee" class="text-danger" style="font-size:11px;"></span>
+                    </div>
+
+                    <div class="field">
+                        <label asp-for="yearsExperience">Years of Experience</label>
+                        <input asp-for="yearsExperience" type="number" />
+                        <span asp-validation-for="yearsExperience" class="text-danger" style="font-size:11px;"></span>
+                    </div>
+                </div>
+
+                <div class="field" style="margin-top: 16px;">
+                    <label asp-for="Biography">Biography</label>
+                    <textarea asp-for="Biography" rows="4"></textarea>
+                    <span asp-validation-for="Biography" class="text-danger" style="font-size:11px;"></span>
+                </div>
+
+                <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px; padding-top: 16px; border-top: 1px solid #f1f5f9;">
+                    <a asp-controller="Doctors" asp-action="Index" style="text-decoration:none; display:inline-flex; align-items:center; justify-content:center; height:44px; padding:0 24px; border-radius:12px; border:1.5px solid #e2e8f0; background:#fff; font-size:14px; font-weight:700; color:#64748b;">
+                        Cancel
+                    </a>
+                    <button type="submit" class="create-btn" style="width:auto; padding:0 32px; border:none; cursor:pointer;">
+                        <i class="bi bi-check-circle-fill"></i> Save Changes
+                    </button>
+                </div>
+            </div>
+        </form>
+      </div>
+    </div>
+</div>
+</body>
+</html>
+
+<script>
+    // Image preview functionality
+    function previewImage(input) {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('currentImage').src = e.target.result;
+            }
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    // Show camera icon on hover
+    const imageContainer = document.querySelector('[onclick*="imageFileInput"]');
+    if (imageContainer) {
+        const overlay = imageContainer.querySelector('.image-overlay');
+        const preview = imageContainer.querySelector('#imagePreview');
+        
+        imageContainer.addEventListener('mouseenter', function() {
+            if (overlay) overlay.style.opacity = '1';
+            if (preview) preview.style.borderColor = '#0ea5e9';
+        });
+        
+        imageContainer.addEventListener('mouseleave', function() {
+            if (overlay) overlay.style.opacity = '0';
+            if (preview) preview.style.borderColor = '#e2e8f0';
+        });
+    }
+</script>

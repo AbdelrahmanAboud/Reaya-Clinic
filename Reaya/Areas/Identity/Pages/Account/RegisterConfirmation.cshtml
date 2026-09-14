@@ -1,0 +1,30 @@
+@page
+@model RegisterConfirmationModel
+@{
+    ViewData["Title"] = "Register confirmation";
+}
+
+<div class="auth-page confirmation-page">
+    <div class="auth-topbar">
+        <a class="auth-brand" asp-area="" asp-controller="Home" asp-action="Index">
+            <span class="brand-mark"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h4l2-5 3 10 2-5h7" /></svg></span>
+            Reaya
+        </a>
+    </div>
+
+    <section class="auth-card confirmation-card">
+        <div class="confirmation-icon" aria-hidden="true">&#10003;</div>
+        <p class="eyebrow">ACCOUNT CREATED</p>
+        <h1>Check your email</h1>
+        <p class="auth-lead">
+            We sent a verification link to <strong>@Model.Email</strong>.
+            Open the message and click <strong>Verify my account</strong> to activate your account.
+        </p>
+        <div class="account-note">
+            <span aria-hidden="true">&#9432;</span>
+            <span>Do not see the email? Check your spam folder, then use the resend confirmation option from the login page.</span>
+        </div>
+        <a class="auth-submit confirmation-action" asp-page="./Login">Go to login</a>
+    </section>
+</div>
+

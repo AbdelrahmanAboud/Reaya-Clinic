@@ -1,0 +1,301 @@
+@model Appointment
+@{
+    Layout = null;
+    bool isWalkin = Model?.PatientId == null;
+    string patientDisplayName = isWalkin ? (Model?.GuestPatientName ?? "Walk-in Patient") : (Model?.Patient?.Name ?? "Registered Patient");
+    string patientDisplayPhone = isWalkin ? (Model?.GuestPatientPhone ?? "-") : (Model?.Patient?.PhoneNo ?? "-");
+    string patientInitials = !string.IsNullOrWhiteSpace(patientDisplayName)
+        ? (patientDisplayName.Length >= 2 ? patientDisplayName.Substring(0, 2).ToUpper() : patientDisplayName.ToUpper())
+        : "PT";
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Appointment Details #@Model?.Id – Rayaah Clinic</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="~/css/dashboard.css" />
+    <style>
+        .details-grid {
+            display: grid;
+            grid-template-columns: 1fr 340px;
+            gap: 24px;
+            align-items: start;
+        }
+        .hero-banner {
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            border: 1px solid #e8edf3;
+            border-radius: 20px;
+            padding: 24px 28px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 12px rgba(15,23,42,0.04);
+            margin-bottom: 24px;
+        }
+        .info-card {
+            background: #fff;
+            border: 1px solid #e8edf3;
+            border-radius: 18px;
+            padding: 24px;
+            box-shadow: 0 2px 10px rgba(15,23,42,0.04);
+            margin-bottom: 20px;
+        }
+        .info-card h3 {
+            font-size: 15px;
+            font-weight: 800;
+            color: #0f172a;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .data-grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+        .data-item label {
+            display: block;
+            font-size: 11px;
+            font-weight: 700;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+        .data-item span {
+            font-size: 14px;
+            font-weight: 700;
+            color: #1e293b;
+        }
+        .timeline-box {
+            position: relative;
+            padding-left: 20px;
+            border-left: 2px solid #e2e8f0;
+            font-size: 12px;
+        }
+        .timeline-box::before {
+            content: '';
+            position: absolute;
+            left: -6px;
+            top: 2px;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #0ea5e9;
+            border: 2px solid #fff;
+        }
+    </style>
+</head>
+<body>
+<div class="shell">
+
+    <!-- Sidebar -->
+    @Html.Partial("_Sidebar")
+
+    <!-- Main Content -->
+    <div class="main">
+        <!-- Topbar -->
+        <header class="topbar">
+            <div class="search-bar">
+                <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 5 5"/></svg>
+                <input type="search" placeholder="Search patients, doctors, appointments..." />
+            </div>
+            
+        </header>
+
+        <!-- Content Body -->
+        <div class="content">
+            <!-- Navigation Back Button -->
+            <div style="margin-bottom: 12px;">
+                <a asp-controller="Appointments" asp-action="Index" style="text-decoration:none; font-size:13px; font-weight:700; color:#0284c7; display:inline-flex; align-items:center; gap:6px;">
+                    <i class="bi bi-arrow-left"></i> Back to Appointments
+                </a>
+            </div>
+
+            <!-- Top Hero Banner with Appointment Title and Actions -->
+            <div class="hero-banner">
+                <div style="display:flex; align-items:center; gap:18px;">
+                    <div style="width:58px; height:58px; border-radius:16px; background:@(isWalkin ? "#fef3c7" : "#e0f2fe"); color:@(isWalkin ? "#b45309" : "#0284c7"); display:grid; place-items:center; font-size:26px;">
+                        <i class="bi bi-calendar2-check-fill"></i>
+                    </div>
+                    <div>
+                        <div style="display:flex; align-items:center; gap:12px; margin-bottom:4px;">
+                            <h1 style="font-size:22px; font-weight:800; color:#0f172a; margin:0;">Appointment #A-@Model?.Id</h1>
+                            <span class="badge-status @(Model?.Status == AppointmentStatus.Confirmed ? "s-confirmed" : (Model?.Status == AppointmentStatus.Pending ? "s-pending" : (Model?.Status == AppointmentStatus.Completed ? "s-completed" : "s-cancelled")))" style="font-size:12px; padding:4px 12px;">
+                                @Model?.Status.ToString()
+                            </span>
+                        </div>
+                        <p style="font-size:13px; color:#64748b; margin:0;">Booked visit details, assigned doctor, and patient record</p>
+                    </div>
+                </div>
+                <div style="display:flex; gap:10px;">
+                    <a asp-controller="Appointments" asp-action="Edit" asp-route-id="@Model?.Id" class="reschedule-btn" style="text-decoration:none; height:42px; padding:0 20px; font-size:13px; background:#f0f9ff; border-color:#bae6fd; color:#0369a1; display:inline-flex; align-items:center; gap:6px;">
+                        <i class="bi bi-pencil-square"></i> Edit / Reschedule
+                    </a>
+                    <button class="reschedule-btn" type="button" onclick="window.print()" style="height:42px; padding:0 18px; font-size:13px; display:inline-flex; align-items:center; gap:6px;">
+                        <i class="bi bi-printer"></i> Print
+                    </button>
+                </div>
+            </div>
+
+            <!-- Details Grid (Left main cards + Right sidebar cards) -->
+            <div class="details-grid">
+
+                <!-- Left Column -->
+                <div>
+                    <!-- Patient Information Card -->
+                    <div class="info-card">
+                        <h3><i class="bi bi-person-circle" style="color:#0284c7;"></i> Patient Information</h3>
+                        <div style="display:flex; align-items:center; gap:16px; margin-bottom:20px; padding-bottom:16px; border-bottom:1px solid #f1f5f9;">
+                            @if (!isWalkin && Model?.Patient != null && !string.IsNullOrEmpty(Model.Patient.ImagePath))
+                            {
+                                <div style="width:48px; height:48px; border-radius:50%; overflow:hidden;">
+                                    <img src="@(Model.Patient.ImagePath.Replace("\\", "/"))" alt="@Model.Patient.Name" style="width:100%;height:100%;object-fit:cover;" />
+                                </div>
+                            }
+                            else
+                            {
+                                <div style="width:48px; height:48px; border-radius:50%; overflow:hidden;">
+                                    <img src="~/images/user_default.jpg" alt="@patientDisplayName" style="width:100%;height:100%;object-fit:cover;" />
+                                </div>
+                            }
+                            <div>
+                                <h4 style="font-size:16px; font-weight:800; color:#0f172a; margin:0;">@patientDisplayName</h4>
+                                <span style="font-size:12px; color:#64748b;">
+                                    @(isWalkin ? "Walk-in Patient (New / Unregistered)" : $"Registered Patient ID: #P-{Model?.Patient?.Id}")
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="data-grid-2">
+                            <div class="data-item">
+                                <label>Phone Number</label>
+                                <span>@patientDisplayPhone</span>
+                            </div>
+                            <div class="data-item">
+                                <label>Patient Type</label>
+                                <span style="color:@(isWalkin ? "#b45309" : "#0284c7");">
+                                    @(isWalkin ? "Walk-in Guest" : "Registered Account")
+                                </span>
+                            </div>
+
+                            @if (!isWalkin && Model?.Patient != null)
+                            {
+                                <div class="data-item">
+                                    <label>Email Address</label>
+                                    <span>@(string.IsNullOrEmpty(Model.Patient.Email) ? "-" : Model.Patient.Email)</span>
+                                </div>
+                                <div class="data-item">
+                                    <label>Gender</label>
+                                    <span>@(string.IsNullOrEmpty(Model.Patient.Gender) ? "-" : Model.Patient.Gender)</span>
+                                </div>
+                                <div class="data-item">
+                                    <label>Blood Type</label>
+                                    <span>@(string.IsNullOrEmpty(Model.Patient.BloodType) ? "-" : Model.Patient.BloodType)</span>
+                                </div>
+                                <div class="data-item">
+                                    <label>Address</label>
+                                    <span>@(string.IsNullOrEmpty(Model.Patient.Address) ? "-" : Model.Patient.Address)</span>
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <!-- Medical Visit Details & Notes Card -->
+                    <div class="info-card">
+                        <h3><i class="bi bi-clipboard2-pulse" style="color:#0ea5e9;"></i> Visit Details &amp; Notes</h3>
+                        <div style="margin-bottom:16px;">
+                            <label style="display:block; font-size:11px; font-weight:700; color:#94a3b8; text-transform:uppercase; margin-bottom:6px;">Chief Complaint / Medical Notes</label>
+                            <div style="background:#f8fafc; border:1.5px solid #e2e8f0; border-radius:12px; padding:16px; font-size:13px; color:#334155; line-height:1.6;">
+                                @(string.IsNullOrWhiteSpace(Model?.Notes) ? "No additional medical notes or instructions recorded for this visit." : Model.Notes)
+                            </div>
+                        </div>
+                        <div class="data-grid-2" style="border-top:1px solid #f1f5f9; padding-top:16px;">
+                            <div class="data-item">
+                                <label>Consultation Fee</label>
+                                <span style="color:#15803d; font-size:16px; font-weight:800;">
+                                    @(Model?.Doctor != null ? Model.Doctor.ConsultationFee + " EGP" : "-")
+                                </span>
+                            </div>
+                            <div class="data-item">
+                                <label>Visit Status</label>
+                                <span style="color:@(Model?.Status == AppointmentStatus.Confirmed ? "#16a34a" : "#0284c7");">
+                                    <i class="bi bi-check-circle-fill"></i> @Model?.Status.ToString()
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column (Sidebar Summary Cards) -->
+                <div>
+                    <!-- Doctor & Clinic Card -->
+                    <div class="info-card">
+                        <h3><i class="bi bi-hospital" style="color:#0ea5e9;"></i> Assigned Doctor</h3>
+                        <div style="display:flex; align-items:center; gap:12px; margin-bottom:14px;">
+                            @if (Model?.Doctor != null && !string.IsNullOrEmpty(Model.Doctor.ImagePath))
+                            {
+                                <div style="width:44px; height:44px; border-radius:12px; overflow:hidden;">
+                                    <img src="@(Model.Doctor.ImagePath.Replace("\\", "/"))" alt="@Model.Doctor.Name" style="width:100%;height:100%;object-fit:cover;" />
+                                </div>
+                            }
+                            else
+                            {
+                                <div style="width:44px; height:44px; border-radius:12px; overflow:hidden;">
+                                    <img src="~/images/user_default.jpg" alt="@(Model?.Doctor?.Name ?? "Doctor")" style="width:100%;height:100%;object-fit:cover;" />
+                                </div>
+                            }
+                            <div>
+                                <strong style="font-size:14px; color:#0f172a; display:block;">@(Model?.Doctor?.Name ?? "Doctor Not Assigned")</strong>
+                                <span style="font-size:11px; color:#0284c7; font-weight:700;">@(Model?.Doctor?.Specialization ?? "-") Department</span>
+                            </div>
+                        </div>
+                        <div style="font-size:12px; color:#475569; border-top:1px solid #f1f5f9; padding-top:12px; display:flex; flex-direction:column; gap:8px;">
+                            <div><i class="bi bi-telephone" style="color:#94a3b8; margin-right:6px;"></i> @(Model?.Doctor?.Phone ?? "Clinic Reception")</div>
+                        </div>
+                    </div>
+
+                    <!-- Schedule Date & Time Card -->
+                    <div class="info-card">
+                        <h3><i class="bi bi-clock-history" style="color:#0ea5e9;"></i> Schedule</h3>
+                        <div style="display:flex; flex-direction:column; gap:12px;">
+                            <div class="data-item">
+                                <label>Appointment Date</label>
+                                <span style="display:flex; align-items:center; gap:6px;">
+                                    <i class="bi bi-calendar3" style="color:#0284c7;"></i>
+                                    @Model?.AppointmentDate.ToString("MMM d, yyyy", System.Globalization.CultureInfo.InvariantCulture)
+                                </span>
+                            </div>
+                            <div class="data-item">
+                                <label>Appointment Time</label>
+                                <span style="display:flex; align-items:center; gap:6px; color:#0284c7; font-size:16px;">
+                                    <i class="bi bi-clock"></i>
+                                    @Model?.AppointmentDate.ToString("hh:mm tt", System.Globalization.CultureInfo.InvariantCulture)
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Booking Log Timeline -->
+                    <div class="info-card">
+                        <h3><i class="bi bi-activity" style="color:#0ea5e9;"></i> Booking Activity</h3>
+                        <div class="timeline-box">
+                            <strong style="color:#0f172a;">Appointment Registered</strong>
+                            <div style="color:#64748b;">@Model?.AppointmentDate.ToString("MMM d, yyyy", System.Globalization.CultureInfo.InvariantCulture)</div>
+                            <span style="font-size:11px; color:#94a3b8;">Status: @Model?.Status.ToString()</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+</div>
+</body>
+</html>

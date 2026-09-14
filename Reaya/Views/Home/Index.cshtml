@@ -1,0 +1,260 @@
+﻿@model List<Reaya.Models.Doctor>
+
+<style>
+    /* Premium UI Enhancements */
+    .clinic-hero h1 {
+        font-family: 'Outfit', sans-serif;
+        font-weight: 800;
+        letter-spacing: -0.5px;
+    }
+    .clinic-hero h1 span {
+        color: #0284c7;
+        background: linear-gradient(135deg, #0284c7, #38bdf8);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    .clinic-primary-btn {
+        background: linear-gradient(135deg, #0284c7, #0369a1);
+        border: none;
+        box-shadow: 0 4px 14px 0 rgba(2, 132, 199, 0.39);
+        transition: all 0.2s ease-in-out;
+    }
+    .clinic-primary-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(2, 132, 199, 0.5);
+        color: white;
+    }
+    .clinic-light-btn {
+        background: rgba(241, 245, 249, 0.8);
+        backdrop-filter: blur(10px);
+        border: 1px solid #e2e8f0;
+        transition: all 0.2s;
+    }
+    .clinic-light-btn:hover {
+        background: #f8fafc;
+        border-color: #cbd5e1;
+        transform: translateY(-2px);
+    }
+    .clinic-doctor {
+        background: #ffffff;
+        border: 1px solid rgba(226, 232, 240, 0.8);
+        border-radius: 20px;
+        padding: 28px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+        overflow: hidden;
+    }
+    .clinic-doctor::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #0ea5e9, #0369a1);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+    .clinic-doctor:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 24px 48px -12px rgba(0, 0, 0, 0.12);
+        border-color: #bae6fd;
+    }
+    .clinic-doctor:hover::before {
+        opacity: 1;
+    }
+    .clinic-doctor p {
+        flex-grow: 1;
+        color: #64748b;
+        font-size: 15px;
+        line-height: 1.6;
+        margin-bottom: 24px;
+    }
+    .book-btn {
+        text-decoration: none;
+        color: #0284c7;
+        font-weight: 700;
+        font-size: 14px;
+        background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+        padding: 8px 20px;
+        border-radius: 24px;
+        transition: all 0.3s ease;
+        border: 1.5px solid #bae6fd;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .book-btn:hover {
+        background: linear-gradient(135deg, #0284c7, #0369a1);
+        color: #ffffff;
+        border-color: transparent;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(2, 132, 199, 0.3);
+    }
+    .doctor-avatar-dynamic {
+        width: 56px;
+        height: 56px;
+        border-radius: 16px;
+        border: 3px solid #e8edf3;
+        display: grid;
+        place-items: center;
+        font-weight: 800;
+        font-size: 20px;
+        color: white;
+        background: linear-gradient(135deg, #0284c7, #38bdf8);
+        transition: all 0.3s ease;
+        overflow: hidden;
+    }
+    .clinic-doctor:hover .doctor-avatar-dynamic {
+        border-color: #0ea5e9;
+        transform: scale(1.05);
+    }
+</style>
+
+<main class="clinic-home">
+    <nav class="clinic-nav navbar navbar-expand-lg" aria-label="Main navigation">
+        <div class="container clinic-container">
+            <a class="clinic-brand navbar-brand" href="#top" style="display: flex; align-items: center; gap: 8px;">
+                <div style="width: 32px; height: 32px; background: linear-gradient(135deg, #0284c7, #0369a1); border-radius: 8px; display: grid; place-items: center; color: white; font-weight: bold;">R</div>
+                <span><strong>Reaya</strong><small>Clinic Management</small></span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#clinicNavigation" aria-controls="clinicNavigation" aria-expanded="false" aria-label="Toggle navigation"><span class="navbar-toggler-icon"></span></button>
+            <div class="collapse navbar-collapse" id="clinicNavigation">
+                <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-2">
+                    <li class="nav-item ms-lg-2">
+                        <a class="btn clinic-light-btn px-3 rounded-pill fw-semibold" href="/Identity/Account/Login?returnUrl=%2FHome%2FSmartRedirect%3Ftarget%3Dbook" style="color: #475569;">
+                            Book
+                        </a>
+                    </li>
+                    <li class="nav-item ms-lg-2">
+                        <a class="btn clinic-light-btn px-3 rounded-pill fw-semibold" href="/Identity/Account/Login?returnUrl=%2FHome%2FSmartRedirect" style="color: #475569;">
+                            My Booking
+                        </a>
+                    </li>
+                    <li class="nav-item ms-lg-2">
+                        <a class="btn clinic-primary-btn px-4 rounded-pill text-white fw-semibold" href="/Identity/Account/Login">Sign in</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container clinic-container clinic-content" id="top">
+        <section class="clinic-hero row align-items-center g-4 g-lg-5" style="margin-top: 20px; margin-bottom: 80px;">
+            <div class="col-lg-6">
+                <h1 style="font-size: 3.5rem; line-height: 1.1; margin-bottom: 24px;">Care that fits <span>your<br class="d-none d-sm-block"> schedule</span></h1>
+                <p class="clinic-lead" style="font-size: 1.1rem; color: #475569; margin-bottom: 32px;">Pick the doctor you trust and lock in an open time slot - confirmed instantly, no phone calls.</p>
+                <div class="d-flex flex-wrap gap-3 mb-5">
+                    <a class="btn clinic-primary-btn rounded-pill px-4 py-2" style="color: white; font-weight: 500;" href="/Identity/Account/Login?returnUrl=%2FHome%2FSmartRedirect%3Ftarget%3Dbook">
+                        Book appointment <i class="bi bi-arrow-right ms-1"></i>
+                    </a>
+                    <a class="btn clinic-light-btn rounded-pill px-4 py-2" style="color: #475569; font-weight: 500;" href="/Identity/Account/Login?returnUrl=%2FHome%2FSmartRedirect">
+                        My bookings
+                    </a>
+                </div>
+                <div class="clinic-stats row g-3">
+                    <div class="col-4">
+                        <div class="clinic-stat" style="background: white; padding: 16px 8px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); text-align: center; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+                            <strong style="font-size: 28px; color: #0f172a; line-height: 1; font-weight: 800; margin-bottom: 4px;">@(ViewBag.DepartmentsCount ?? 0)+</strong>
+                            <small style="color: #64748b; font-size: 13px; font-weight: 500;">Specialties</small>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="clinic-stat" style="background: white; padding: 16px 8px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); text-align: center; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+                            <strong style="font-size: 28px; color: #0f172a; line-height: 1; font-weight: 800; margin-bottom: 4px;">@(ViewBag.AvailableDoctors ?? 0)</strong>
+                            <small style="color: #64748b; font-size: 13px; font-weight: 500;">Specialists</small>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="clinic-stat" style="background: white; padding: 16px 8px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); text-align: center; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+                            <strong style="font-size: 28px; color: #0f172a; line-height: 1; font-weight: 800; margin-bottom: 4px; display: flex; align-items: baseline; gap: 4px;">10<span style="font-size: 16px;">m</span></strong>
+                            <small style="color: #64748b; font-size: 13px; font-weight: 500; white-space: nowrap;">Avg. wait</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="clinic-hero-image" style="border-radius: 24px; overflow: hidden; box-shadow: 0 20px 40px -12px rgba(0,0,0,0.15);">
+                    <img src="~/Clinic_image.jpg" alt="Doctor speaking with a patient in a bright clinic" loading="eager" style="width: 100%; height: auto; object-fit: cover;">
+                </div>
+            </div>
+        </section>
+
+        <section class="clinic-section clinic-doctors-section" id="doctors" style="margin-bottom: 80px;">
+            <div class="clinic-section-heading" style="margin-bottom: 32px;">
+                <h2 style="font-family: 'Outfit', sans-serif; font-weight: 700; color: #0f172a;">Top-rated doctors</h2>
+            </div>
+            
+            @if (Model != null && Model.Any())
+            {
+                <div class="row g-4">
+                    @{
+                        // Color array for avatars
+                        string[] gradients = new[] { 
+                            "linear-gradient(135deg, #0284c7, #38bdf8)", 
+                            "linear-gradient(135deg, #059669, #34d399)", 
+                            "linear-gradient(135deg, #7c3aed, #a78bfa)",
+                            "linear-gradient(135deg, #ea580c, #fb923c)"
+                        };
+                        int colorIndex = 0;
+                    }
+
+                    @foreach (var doctor in Model)
+                    {
+                        string initials = "DR";
+                        if (!string.IsNullOrEmpty(doctor.Name))
+                        {
+                            var parts = doctor.Name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                            if (parts.Length >= 2) initials = $"{char.ToUpper(parts[0][0])}{char.ToUpper(parts[1][0])}";
+                            else if (parts.Length == 1) initials = parts[0].Substring(0, Math.Min(2, parts[0].Length)).ToUpper();
+                        }
+                        string bgGradient = gradients[colorIndex % gradients.Length];
+                        colorIndex++;
+
+                        <div class="col-md-4">
+                            <article class="clinic-doctor">
+                                <div class="doctor-head" style="display: flex; gap: 16px; align-items: center; margin-bottom: 16px;">
+                                    @if (!string.IsNullOrEmpty(doctor.ImagePath))
+                                    {
+                                        <div style="width:48px;height:48px;border-radius:12px;overflow:hidden;flex-shrink:0;">
+                                            <img src="@doctor.ImagePath" alt="@doctor.Name" style="width:100%;height:100%;object-fit:cover;" />
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div style="width:48px;height:48px;border-radius:12px;overflow:hidden;flex-shrink:0;">
+                                            <img src="~/images/user_default.jpg" alt="@doctor.Name" style="width:100%;height:100%;object-fit:cover;" />
+                                        </div>
+                                    }
+                                    <div>
+                                        <strong style="display: block; font-size: 16px; color: #0f172a;">@doctor.Name</strong>
+                                        <small style="color: #0284c7; font-weight: 500; font-size: 13px;">@doctor.Specialization</small>
+                                    </div>
+                                </div>
+                                <p>@(string.IsNullOrEmpty(doctor.Biography) ? $"Specialized in {doctor.Specialization} with extensive experience." : doctor.Biography)</p>
+                                <div class="doctor-meta" style="display: flex; justify-content: space-between; align-items: center; margin-top: auto; padding-top: 16px; border-top: 1px solid #f1f5f9;">
+                                    <div style="display: flex; gap: 12px; color: #64748b; font-size: 13px; font-weight: 500;">
+                                        <span style="display: flex; align-items: center; gap: 4px;"><i class="bi bi-star-fill text-warning"></i> 4.9</span>
+                                        <span style="display: flex; align-items: center; gap: 4px;"><i class="bi bi-clock"></i> @(string.IsNullOrEmpty(doctor.yearsExperience) ? "10" : doctor.yearsExperience) yrs</span>
+                                    </div>
+                                    <a href="/Identity/Account/Login?returnUrl=%2FHome%2FSmartRedirect%3Ftarget%3Dbook" class="book-btn">
+                                        Book <i class="bi bi-chevron-right" style="font-size: 11px;"></i>
+                                    </a>
+                                </div>
+                            </article>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-5">
+                    <p style="color: #64748b;">No doctors currently available in the database.</p>
+                </div>
+            }
+        </section>
+    </div>
+</main>

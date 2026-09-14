@@ -1,0 +1,158 @@
+@model List<Appointment>
+@{
+    Layout = "_DashboardLayout";
+    ViewData["Title"] = "My Day";
+    
+    var doctor = ViewBag.Doctor as Doctor;
+    var totalPatients = ViewBag.TotalPatients ?? 0;
+    var completedAppointments = ViewBag.CompletedAppointments ?? 0;
+    var pendingAppointments = ViewBag.PendingAppointments ?? 0;
+    var nextAppointment = ViewBag.NextAppointment as Appointment;
+    string initials = "DR";
+    if (!string.IsNullOrEmpty(doctor?.Name))
+    {
+        var nameParts = doctor.Name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (nameParts.Length >= 2)
+        {
+            initials = $"{char.ToUpper(nameParts[0][0])}{char.ToUpper(nameParts[1][0])}";
+        }
+        else if (nameParts.Length == 1)
+        {
+            initials = nameParts[0].Substring(0, Math.Min(2, nameParts[0].Length)).ToUpper();
+        }
+    }
+}
+
+@section TopBar {
+<form method="get" asp-controller="DoctorDashboard" asp-action="MyDay" style="flex-grow: 1; display: flex;">
+    <div class="search-bar" style="width: 100%;">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 5 5"/></svg>
+        <input type="search" name="search" value="@Context.Request.Query["search"]" placeholder="Search patients, appointments..." style="width: 100%; border: none; outline: none; background: transparent;" onchange="this.form.submit()" />
+    </div>
+</form>
+}
+
+<div class="content">
+
+            <!-- Page header -->
+            <div class="page-header">
+            <div>
+    <h1>Your day, Dr. @doctor?.Name</h1>
+    <p>@DateTime.Now.ToString("dddd, MMMM d", System.Globalization.CultureInfo.InvariantCulture) in Clinic room 4</p>
+</div>
+            </div>
+
+            <!-- Stats -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div>
+                        <label>Today's patients</label>
+                        <div class="value">@Model.Count</div>
+                        <div class="sub green">@completedAppointments completed</div>
+                    </div>
+                    <div class="stat-icon si-teal"><i class="bi bi-people-fill"></i></div>
+                </div>
+                <div class="stat-card">
+                    <div>
+    <label>Next consultation</label>
+    @if (nextAppointment != null)
+    {
+        <div class="appointment-date-sub" style="font-size: 13px; color: #64748b; font-weight: 500; margin-bottom: 2px;">
+            @nextAppointment.AppointmentDate.ToString("MMM d, yyyy", System.Globalization.CultureInfo.InvariantCulture)
+        </div>
+        <div class="value" style="font-size: 26px; font-weight: 800; margin: 0;">@nextAppointment.AppointmentDate.ToString("hh:mm tt", System.Globalization.CultureInfo.InvariantCulture)</div>
+        <div class="sub blue">in @((nextAppointment.AppointmentDate - DateTime.Now).TotalMinutes.ToString("F0")) min</div>
+    }
+    else
+    {
+        <div class="value" style="font-size: 22px; color: #94a3b8; font-weight: 500; margin-top: 10px; margin-bottom: 6px;">No upcoming</div>
+        <div class="sub" style="color: #cbd5e1;"><i class="bi bi-cup-hot" style="margin-right: 4px;"></i>Time for a break</div>
+    }
+
+</div>
+                    <div class="stat-icon si-blue"><i class="bi bi-clock-fill"></i></div>
+                </div>
+                <div class="stat-card">
+                    <div>
+                        <label>Pending reports</label>
+                        <div class="value">@pendingAppointments</div>
+                        <div class="sub amber">Need attention</div>
+                    </div>
+                    <div class="stat-icon si-violet"><i class="bi bi-file-medical-fill"></i></div>
+                </div>
+                <div class="stat-card">
+                    <div>
+                        <label>Total patients</label>
+                        <div class="value">@totalPatients</div>
+                        <div class="sub blue">All time</div>
+                    </div>
+                    <div class="stat-icon si-slate"><i class="bi bi-person-badge-fill"></i></div>
+                </div>
+            </div>
+
+            <!-- Today's appointments -->
+            <div class="card" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02); margin-top: 20px; overflow: hidden;">
+    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; padding: 20px 24px; border-bottom: 1px solid #f1f5f9;">
+        <h2 style="font-size: 18px; font-weight: 600; color: #0f172a; margin: 0;">Today's appointments</h2>
+    </div>
+    
+    @if (Model != null && Model.Any())
+    {
+        <div style="display: flex; flex-direction: column; gap: 12px; padding: 16px 24px;">
+            @foreach (var appointment in Model)
+            {
+                var patientName = appointment.Patient != null ? appointment.Patient.Name : (appointment.GuestPatientName ?? "Walk-in Patient");
+                var patientInitials = patientName.Split(' ', StringSplitOptions.RemoveEmptyEntries).Length >= 2 
+                    ? $"{char.ToUpper(patientName[0])}{char.ToUpper(patientName.Split(' ')[1][0])}" 
+                    : patientName.Substring(0, Math.Min(2, patientName.Length)).ToUpper();
+                
+                string statusBadgeBg = "#e0f2fe";
+                string statusBadgeColor = "#0284c7";
+                if (appointment.Status == AppointmentStatus.Pending) { statusBadgeBg = "#fef3c7"; statusBadgeColor = "#d97706"; }
+                else if (appointment.Status == AppointmentStatus.Completed) { statusBadgeBg = "#dcfce7"; statusBadgeColor = "#15803d"; }
+                else if (appointment.Status == AppointmentStatus.Cancelled) { statusBadgeBg = "#fee2e2"; statusBadgeColor = "#b91c1c"; }
+
+                <div style="display: flex; align-items: center; gap: 16px; padding: 16px; border-radius: 12px; background: #f8fafc; border: 1px solid #e2e8f0; transition: all 0.2s;">
+                    <div style="display: grid; width: 48px; height: 48px; place-items: center; border-radius: 12px; background: linear-gradient(135deg, #0284c7, #0369a1); color: white; font-weight: 700; font-size: 18px; flex-shrink: 0;">
+                        @patientInitials
+                    </div>
+                    <div style="flex: 1; min-width: 0;">
+                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                            <strong style="color: #0f172a; font-size: 15px; font-weight: 700;">@patientName</strong>
+                            <span style="display: inline-flex; align-items: center; gap: 4px; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; background-color: @statusBadgeBg; color: @statusBadgeColor;">
+                                @appointment.Status.ToString()
+                            </span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 16px; color: #64748b; font-size: 13px;">
+                            <span><i class="bi bi-calendar3" style="margin-right: 4px;"></i>@appointment.AppointmentDate.ToString("MMM d, yyyy - hh:mm tt", System.Globalization.CultureInfo.InvariantCulture)</span>
+                            <span><i class="bi bi-person" style="margin-right: 4px;"></i>@((DateTime.Now.Year - appointment.Patient?.DateOfBirth.Year ?? 30)) yrs</span>
+                            <span><i class="bi bi-chat-dots" style="margin-right: 4px;"></i>@(string.IsNullOrEmpty(appointment.Notes) ? "General consultation" : appointment.Notes)</span>
+                        </div>
+                    </div>
+                    @if (appointment.Status == AppointmentStatus.Completed)
+                    {
+                        <span style="height: 36px; padding: 0 16px; border-radius: 18px; border: 1.5px solid #dcfce7; background: #f0fdf4; color: #15803d; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; cursor: not-allowed; opacity: 0.8;">
+                            <i class="bi bi-check2-all"></i> Done
+                        </span>
+                    }
+                    else
+                    {
+                        <a class="schedule-button" asp-controller="DoctorDashboard" asp-action="Consultation" asp-route-appointmentId="@appointment.Id" style="height: 36px; padding: 0 16px; border-radius: 18px; border: 1.5px solid #e2e8f0; background: #ffffff; color: #0284c7; font-size: 12px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+                            <i class="bi bi-play-fill"></i> Start
+                        </a>
+                    }
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div style="text-align: center; color: #94a3b8; padding: 40px;">
+            <i class="bi bi-calendar-x" style="font-size: 48px; margin-bottom: 12px;"></i>
+            <p>No appointments scheduled for today</p>
+        </div>
+    }
+    
+</div>
+</div>
+</div>

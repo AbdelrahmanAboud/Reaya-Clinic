@@ -1,0 +1,404 @@
+@model Appointment
+@{
+    var patientMedicalHistory = ViewBag.PatientMedicalHistory as List<MedicalRecord>;
+    var patient = Model?.Patient;
+    var doctor = Model?.Doctor;
+    string initials = "DR";
+    if (!string.IsNullOrEmpty(doctor?.Name))
+    {
+        var nameParts = doctor.Name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (nameParts.Length >= 2)
+        {
+            initials = $"{char.ToUpper(nameParts[0][0])}{char.ToUpper(nameParts[1][0])}";
+        }
+        else if (nameParts.Length == 1)
+        {
+            initials = nameParts[0].Substring(0, Math.Min(2, nameParts[0].Length)).ToUpper();
+        }
+    }
+    
+    string patientInitials = "PT";
+    if (!string.IsNullOrEmpty(patient?.Name))
+    {
+        var nameParts = patient.Name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (nameParts.Length >= 2)
+        {
+            patientInitials = $"{char.ToUpper(nameParts[0][0])}{char.ToUpper(nameParts[1][0])}";
+        }
+        else if (nameParts.Length == 1)
+        {
+            patientInitials = nameParts[0].Substring(0, Math.Min(2, nameParts[0].Length)).ToUpper();
+        }
+    }
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Consultation - Doctor Portal</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="~/css/dashboard.css" />
+    <style>
+        body {
+            background-color: #f8fafc;
+            font-family: 'Inter', sans-serif;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Outfit', sans-serif;
+        }
+        
+        .consultation-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 10px 0 40px;
+        }
+        
+        /* Premium Card Styles */
+        .premium-card {
+            background: #ffffff;
+            border-radius: 16px;
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
+            overflow: hidden;
+            margin-bottom: 24px;
+        }
+        
+        .premium-card-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid #f1f5f9;
+            background: #ffffff;
+        }
+        
+        .premium-card-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #0f172a;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        /* Patient Header Banner */
+        .patient-banner {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 24px;
+            background: linear-gradient(to right, #ffffff, #f8fafc);
+        }
+        
+        .patient-avatar {
+            width: 64px;
+            height: 64px;
+            border-radius: 16px;
+            background: linear-gradient(135deg, #0ea5e9, #2563eb);
+            color: white;
+            font-weight: 700;
+            font-size: 24px;
+            display: grid;
+            place-items: center;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+            font-family: 'Outfit', sans-serif;
+        }
+        
+        .tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .tag-allergy { background-color: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+        .tag-chronic { background-color: #fffbeb; color: #d97706; border: 1px solid #fde68a; }
+
+        /* Form Layout */
+        .grid-layout {
+            display: grid;
+            grid-template-columns: 1.5fr 1fr;
+            gap: 24px;
+            align-items: start;
+        }
+        
+        /* Modern Inputs */
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-label {
+            display: block;
+            color: #475569;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-family: 'Inter', sans-serif;
+        }
+        .modern-input {
+            width: 100%;
+            padding: 12px 16px;
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 15px;
+            color: #0f172a;
+            transition: all 0.2s ease;
+            font-family: 'Inter', sans-serif;
+        }
+        .modern-input:focus {
+            outline: none;
+            background-color: #ffffff;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+        }
+        .modern-input::placeholder {
+            color: #94a3b8;
+        }
+        
+        textarea.modern-input {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 14px 24px;
+            border-radius: 12px;
+            border: none;
+            background: linear-gradient(135deg, #0284c7, #2563eb);
+            color: white;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3);
+            transition: all 0.2s ease;
+            font-family: 'Outfit', sans-serif;
+        }
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4);
+        }
+
+        /* History Timeline Mini */
+        .history-list {
+            padding: 20px;
+            max-height: 700px;
+            overflow-y: auto;
+        }
+        
+        /* Custom Scrollbar for history */
+        .history-list::-webkit-scrollbar { width: 6px; }
+        .history-list::-webkit-scrollbar-track { background: transparent; }
+        .history-list::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .history-list::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        .history-item {
+            position: relative;
+            padding-left: 24px;
+            margin-bottom: 24px;
+        }
+        .history-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 6px;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #3b82f6;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+        }
+        .history-item::after {
+            content: '';
+            position: absolute;
+            left: 4px;
+            top: 20px;
+            bottom: -20px;
+            width: 2px;
+            background: #e2e8f0;
+        }
+        .history-item:last-child::after {
+            display: none;
+        }
+        .history-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .history-box {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 16px;
+            transition: all 0.2s ease;
+        }
+        .history-box:hover {
+            background: #ffffff;
+            border-color: #cbd5e1;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+        }
+        
+        .history-date {
+            font-size: 12px;
+            color: #64748b;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        .history-diagnosis {
+            font-size: 15px;
+            font-weight: 700;
+            color: #0f172a;
+            margin: 0 0 8px 0;
+            font-family: 'Outfit', sans-serif;
+        }
+        .history-rx {
+            font-size: 13px;
+            color: #0f766e;
+            background: #f0fdfa;
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid #ccfbf1;
+            margin-top: 8px;
+        }
+
+    </style>
+</head>
+<body>
+<div class="shell">
+
+    <!-- Sidebar -->
+    @Html.Partial("_Sidebar")
+
+    <!-- Main -->
+    <div class="main">
+        <header class="topbar">
+            <a href="/DoctorDashboard/MyDay" style="display: flex; align-items: center; gap: 8px; color: #475569; font-size: 14px; font-weight: 600; text-decoration: none; transition: color 0.2s;">
+                <i class="bi bi-arrow-left"></i> Back to my day
+            </a>
+        </header>
+
+        <div class="content consultation-container">
+
+            <!-- Patient Info Banner -->
+            <div class="premium-card">
+                <div class="patient-banner">
+                    <div style="display: flex; align-items: center; gap: 20px;">
+                        <div class="patient-avatar">
+                            @patientInitials
+                        </div>
+                        <div>
+                            <h2 style="font-family: 'Outfit', sans-serif; font-size: 24px; font-weight: 700; color: #0f172a; margin: 0 0 4px;">@patient?.Name</h2>
+                            <div style="display: flex; align-items: center; gap: 12px; color: #64748b; font-size: 14px;">
+                                <span><i class="bi bi-person-vcard"></i> ID: @patient?.Id</span>
+                                <span>•</span>
+                                <span><i class="bi bi-calendar-event"></i> @((DateTime.Now.Year - patient?.DateOfBirth.Year ?? 30)) years old</span>
+                                <span>•</span>
+                                <span><i class="bi bi-gender-ambiguous"></i> @patient?.Gender</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 8px; align-items: flex-end;">
+                      
+                      
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Workspace: Form + History side by side -->
+            <div class="grid-layout">
+                
+                <!-- Consultation Form -->
+                <div class="premium-card" style="margin-bottom: 0;">
+                    <div class="premium-card-header">
+                        <h3 class="premium-card-title">
+                            <i class="bi bi-clipboard2-pulse text-primary" style="color: #3b82f6;"></i> 
+                            Clinical Consultation
+                        </h3>
+                    </div>
+                    
+                    <form asp-controller="DoctorDashboard" asp-action="SaveConsultation" asp-route-appointmentId="@Model?.Id" method="post" style="padding: 24px;">
+                        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Chief Complaint & Diagnosis <span style="color: #ef4444;">*</span></label>
+                            <input type="text" name="Diagnosis" class="modern-input" placeholder="Enter primary diagnosis or patient concern..." required />
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Clinical Notes</label>
+                            <textarea name="DoctorNotes" class="modern-input" rows="4" placeholder="Detailed examination findings, observations, and recommendations..."></textarea>
+                        </div>
+
+                        <div class="form-group" style="margin-bottom: 32px;">
+                            <label class="form-label">
+                                <i class="bi bi-capsule" style="color: #0ea5e9;"></i> E-Prescription
+                            </label>
+                            <textarea name="Prescription" class="modern-input" rows="4" placeholder="Medication Name, Dosage, Frequency, Duration... (e.g., Amoxicillin 500mg, 1 tab TID for 7 days)"></textarea>
+                        </div>
+
+                        <button type="submit" class="btn-submit">
+                            <i class="bi bi-check-circle-fill"></i> Complete Consultation
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Patient History Sidebar -->
+                <div class="premium-card" style="margin-bottom: 0;">
+                    <div class="premium-card-header">
+                        <h3 class="premium-card-title">
+                            <i class="bi bi-clock-history" style="color: #64748b;"></i> 
+                            Past Records
+                        </h3>
+                    </div>
+                    
+                    <div class="history-list">
+                        @if (patientMedicalHistory != null && patientMedicalHistory.Any())
+                        {
+                            @foreach (var record in patientMedicalHistory.Take(10))
+                            {
+                                <div class="history-item">
+                                    <div class="history-box">
+<div class="history-date">@record.CreatedAt.ToString("MMM dd, yyyy", System.Globalization.CultureInfo.InvariantCulture)</div>                                        <h4 class="history-diagnosis">@record.Diagnosis</h4>
+                                        <div style="font-size: 13px; color: #64748b; margin-bottom: 8px;">
+                                            Dr. @record.Appointment?.Doctor?.Name
+                                        </div>
+                                        
+                                        @if (!string.IsNullOrEmpty(record.DoctorNotes))
+                                        {
+                                            <div style="font-size: 13px; color: #475569; margin-bottom: 8px; line-height: 1.5;">
+                                                <i class="bi bi-chat-left-text" style="color: #94a3b8; font-size: 11px;"></i> @record.DoctorNotes
+                                            </div>
+                                        }
+
+                                        @if (!string.IsNullOrEmpty(record.Prescription))
+                                        {
+                                            <div class="history-rx">
+                                                <strong>Rx:</strong> @record.Prescription
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <div style="text-align: center; padding: 40px 20px; color: #94a3b8;">
+                                <i class="bi bi-inbox" style="font-size: 40px; margin-bottom: 12px; display: block;"></i>
+                                <p style="margin: 0; font-size: 14px;">No previous medical history found for this patient.</p>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+</div>
+</body>
+</html>

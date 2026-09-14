@@ -1,0 +1,314 @@
+@model List<Patient>
+@{
+    Layout = "_DashboardLayout";
+    ViewData["Title"] = "Patients";
+    string searchQuery = Context.Request.Query["search"];
+    string sortBy = Context.Request.Query["sortBy"];
+    string sortOrder = Context.Request.Query["sortOrder"];
+
+    // Helper function to generate sort URL
+    string GetSortUrl(string column, string direction = null)
+    {
+        string newSortOrder = direction ?? "asc";
+        if (string.IsNullOrEmpty(direction))
+        {
+            if (sortBy == column && sortOrder == "asc")
+            {
+                newSortOrder = "desc";
+            }
+        }
+        return $"?search={searchQuery}&sortBy={column}&sortOrder={newSortOrder}";
+    }
+
+    // Helper to get sort icon class for arrows
+    string GetArrowClass(string column, string direction)
+    {
+        if (sortBy == column && sortOrder == direction)
+        {
+            return "active";
+        }
+        return "";
+    }
+
+    // Helper to check if column is active
+    bool IsColumnActive(string column)
+    {
+        return sortBy == column;
+    }
+}
+
+@section TopBar {
+<form method="get" asp-controller="Patients" asp-action="Index" style="flex-grow:1;display:flex;">
+    <input type="hidden" name="sortBy" value="@sortBy" />
+    <input type="hidden" name="sortOrder" value="@sortOrder" />
+    <div class="search-bar" style="width:100%;">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 5 5"/></svg>
+        <input type="search" name="search" value="@searchQuery" placeholder="Search patients by name, phone, email..." onchange="this.form.submit()" />
+    </div>
+</form>
+}
+
+<style>
+.sortable-header {
+    position: relative;
+    transition: all 0.2s ease;
+}
+
+.sortable-header:hover {
+    color: #0284c7 !important;
+    background: #f0f9ff !important;
+}
+
+.sortable-header.active-sort {
+    color: #0284c7 !important;
+    background: #f0f9ff !important;
+}
+
+.sort-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #f8fafc;
+    color: #64748b;
+    padding: 10px 14px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    border: 2px solid #e2e8f0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.sort-badge.active {
+    background: #0284c7;
+    color: white;
+    box-shadow: 0 4px 12px rgba(2, 132, 199, 0.25);
+    border: 2px solid #0284c7;
+}
+
+.sort-arrows {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    cursor: pointer;
+    padding: 2px;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.sort-arrows:hover {
+    background: rgba(2, 132, 199, 0.1);
+}
+
+.sort-arrow {
+    font-size: 14px;
+    color: #cbd5e1;
+    transition: all 0.2s ease;
+    line-height: 1;
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.sort-arrow:hover {
+    color: #0284c7;
+    transform: scale(1.1);
+}
+
+.sort-arrow.active {
+    color: #0284c7;
+    font-weight: bold;
+    transform: scale(1.15);
+}
+
+.sort-badge.active .sort-arrow.active {
+    color: white;
+}
+
+.sort-badge.active .sort-arrow:not(.active) {
+    color: rgba(255, 255, 255, 0.4);
+}
+</style>
+
+<div class="content">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:28px;flex-wrap:wrap;gap:16px;">
+                <div>
+                    <h1 style="font-size:22px;font-weight:800;color:#0f172a;margin:0 0 4px;">Patients</h1>
+                    <p style="font-size:14px;color:#64748b;margin:0;">
+                        @Model.Count() patient@(Model.Count() != 1 ? "s" : "") registered
+                        @if (!string.IsNullOrEmpty(searchQuery)) {
+                            <span> &middot; Results for "<strong>@searchQuery</strong>"</span>
+                        }
+                    </p>
+                </div>
+                <a asp-controller="Patients" asp-action="Create"
+                   style="display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#0284c7,#0369a1);color:white;padding:10px 20px;border-radius:10px;font-weight:600;font-size:14px;text-decoration:none;box-shadow:0 4px 12px rgba(2,132,199,0.3);transition:all 0.2s;">
+                    <i class="bi bi-person-plus-fill"></i> Add Patient
+                </a>
+            </div>
+
+            @if (Model != null && Model.Any())
+            {
+                <div style="background:white;border-radius:16px;border:1px solid #e2e8f0;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,0.04);">
+                    <table style="width:100%;border-collapse:collapse;">
+                        <thead>
+                            <tr style="background:#f8fafc;border-bottom:2px solid #f1f5f9;">
+                                <th class="sortable-header @(IsColumnActive("name")?"active-sort":"")" style="padding:16px 24px;text-align:left;font-size:12px;font-weight:700;color:#94a3b8;letter-spacing:0.8px;text-transform:uppercase;cursor:pointer;user-select:none;">
+                                    <div style="display:flex;align-items:center;gap:8px;">
+                                        Patient
+                                        <span class="sort-badge @(IsColumnActive("name")?"active":"")">
+                                            <div class="sort-arrows">
+                                                <i class="bi bi-caret-up sort-arrow @GetArrowClass("name", "asc")" onclick="event.stopPropagation(); window.location.href='@GetSortUrl("name", "asc")'"></i>
+                                                <i class="bi bi-caret-down sort-arrow @GetArrowClass("name", "desc")" onclick="event.stopPropagation(); window.location.href='@GetSortUrl("name", "desc")'"></i>
+                                            </div>
+                                        </span>
+                                    </div>
+                                </th>
+                                <th class="sortable-header @(IsColumnActive("phone")?"active-sort":"")" style="padding:16px 24px;text-align:left;font-size:12px;font-weight:700;color:#94a3b8;letter-spacing:0.8px;text-transform:uppercase;cursor:pointer;user-select:none;">
+                                    <div style="display:flex;align-items:center;gap:8px;">
+                                        Contact
+                                        <span class="sort-badge @(IsColumnActive("phone")?"active":"")">
+                                            <div class="sort-arrows">
+                                                <i class="bi bi-caret-up sort-arrow @GetArrowClass("phone", "asc")" onclick="event.stopPropagation(); window.location.href='@GetSortUrl("phone", "asc")'"></i>
+                                                <i class="bi bi-caret-down sort-arrow @GetArrowClass("phone", "desc")" onclick="event.stopPropagation(); window.location.href='@GetSortUrl("phone", "desc")'"></i>
+                                            </div>
+                                        </span>
+                                    </div>
+                                </th>
+                                <th class="sortable-header @(IsColumnActive("blood")?"active-sort":"")" style="padding:16px 24px;text-align:left;font-size:12px;font-weight:700;color:#94a3b8;letter-spacing:0.8px;text-transform:uppercase;cursor:pointer;user-select:none;">
+                                    <div style="display:flex;align-items:center;gap:8px;">
+                                        Blood
+                                        <span class="sort-badge @(IsColumnActive("blood")?"active":"")">
+                                            <div class="sort-arrows">
+                                                <i class="bi bi-caret-up sort-arrow @GetArrowClass("blood", "asc")" onclick="event.stopPropagation(); window.location.href='@GetSortUrl("blood", "asc")'"></i>
+                                                <i class="bi bi-caret-down sort-arrow @GetArrowClass("blood", "desc")" onclick="event.stopPropagation(); window.location.href='@GetSortUrl("blood", "desc")'"></i>
+                                            </div>
+                                        </span>
+                                    </div>
+                                </th>
+                                <th class="sortable-header @(IsColumnActive("gender")?"active-sort":"")" style="padding:16px 24px;text-align:left;font-size:12px;font-weight:700;color:#94a3b8;letter-spacing:0.8px;text-transform:uppercase;cursor:pointer;user-select:none;">
+                                    <div style="display:flex;align-items:center;gap:8px;">
+                                        Gender
+                                        <span class="sort-badge @(IsColumnActive("gender")?"active":"")">
+                                            <div class="sort-arrows">
+                                                <i class="bi bi-caret-up sort-arrow @GetArrowClass("gender", "asc")" onclick="event.stopPropagation(); window.location.href='@GetSortUrl("gender", "asc")'"></i>
+                                                <i class="bi bi-caret-down sort-arrow @GetArrowClass("gender", "desc")" onclick="event.stopPropagation(); window.location.href='@GetSortUrl("gender", "desc")'"></i>
+                                            </div>
+                                        </span>
+                                    </div>
+                                </th>
+                                <th style="padding:16px 24px;text-align:right;font-size:12px;font-weight:700;color:#94a3b8;letter-spacing:0.8px;text-transform:uppercase;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        @{ int rowIndex = 0; }
+                        @foreach (Patient patient in Model)
+                        {
+                            rowIndex++;
+                            string initials = "PT";
+                            if (!string.IsNullOrEmpty(patient.Name))
+                            {
+                                var np = patient.Name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                                if (np.Length >= 2) initials = $"{char.ToUpper(np[0][0])}{char.ToUpper(np[1][0])}";
+                                else if (np.Length == 1) initials = np[0].Substring(0, Math.Min(2, np[0].Length)).ToUpper();
+                            }
+                            string[] grads = {
+                                "linear-gradient(135deg,#0284c7,#38bdf8)",
+                                "linear-gradient(135deg,#059669,#34d399)",
+                                "linear-gradient(135deg,#7c3aed,#a78bfa)",
+                                "linear-gradient(135deg,#ea580c,#fb923c)",
+                                "linear-gradient(135deg,#db2777,#f472b6)"
+                            };
+                            string grad = grads[(rowIndex - 1) % grads.Length];
+                            int age = patient.DateOfBirth != default ? DateTime.Now.Year - patient.DateOfBirth.Year : 0;
+
+                            <tr style="border-bottom:1px solid #f8fafc;" class="patient-row">
+                                <td style="padding:16px 20px;">
+                                    <div style="display:flex;align-items:center;gap:14px;">
+                                        @if (!string.IsNullOrEmpty(patient.ImagePath))
+                                        {
+                                            <div style="width:42px;height:42px;border-radius:12px;overflow:hidden;flex-shrink:0;">
+                                                <img src="@patient.ImagePath" alt="@patient.Name" style="width:100%;height:100%;object-fit:cover;" />
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <div style="width:42px;height:42px;border-radius:12px;overflow:hidden;flex-shrink:0;">
+                                                <img src="~/images/user_default.jpg" alt="@patient.Name" style="width:100%;height:100%;object-fit:cover;" />
+                                            </div>
+                                        }
+                                        <div>
+                                            <a asp-controller="Patients" asp-action="Details" asp-route-id="@patient.Id" asp-route-search="@searchQuery" asp-route-sortBy="@sortBy" asp-route-sortOrder="@sortOrder"
+                                               style="font-size:15px;font-weight:700;color:#0f172a;text-decoration:none;display:block;" class="patient-name-link">@patient.Name</a>
+                                            @if (age > 0) { <span style="font-size:12px;color:#94a3b8;">@age years old</span> }
+                                        </div>
+                                    </div>
+                                </td>
+                                <td style="padding:16px 20px;">
+                                    <div style="display:flex;flex-direction:column;gap:4px;">
+                                        <span style="font-size:13px;color:#475569;display:flex;align-items:center;gap:6px;">
+                                            <i class="bi bi-telephone" style="color:#0284c7;font-size:12px;"></i>
+                                            @(string.IsNullOrEmpty(patient.PhoneNo) ? "—" : patient.PhoneNo)
+                                        </span>
+                                        <span style="font-size:12px;color:#94a3b8;display:flex;align-items:center;gap:6px;">
+                                            <i class="bi bi-envelope" style="font-size:11px;"></i>
+                                            @(string.IsNullOrEmpty(patient.Email) ? "No email" : patient.Email)
+                                        </span>
+                                    </div>
+                                </td>
+                                <td style="padding:16px 20px;">
+                                    @if (!string.IsNullOrEmpty(patient.BloodType)) {
+                                        <span style="display:inline-flex;align-items:center;gap:5px;background:#fef2f2;color:#dc2626;font-size:12px;font-weight:700;padding:4px 10px;border-radius:20px;border:1px solid #fecaca;">
+                                            <i class="bi bi-droplet-fill" style="font-size:10px;"></i> @patient.BloodType
+                                        </span>
+                                    } else { <span style="color:#cbd5e1;font-size:13px;">—</span> }
+                                </td>
+                                <td style="padding:16px 20px;">
+                                    @if (!string.IsNullOrEmpty(patient.Gender)) {
+                                        <span style="display:inline-flex;align-items:center;gap:5px;background:#f0f9ff;color:#0284c7;font-size:12px;font-weight:600;padding:4px 10px;border-radius:20px;border:1px solid #bae6fd;">
+                                            @patient.Gender
+                                        </span>
+                                    } else { <span style="color:#cbd5e1;font-size:13px;">—</span> }
+                                </td>
+                                <td style="padding:16px 20px;text-align:right;">
+                                    <div style="display:flex;gap:8px;justify-content:flex-end;">
+                                        <a asp-controller="Patients" asp-action="Details" asp-route-id="@patient.Id"
+                                           style="display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:8px;background:#f1f5f9;color:#334155;font-size:13px;font-weight:600;text-decoration:none;border:1px solid #e2e8f0;">
+                                            <i class="bi bi-person-lines-fill"></i> View
+                                        </a>
+                                        <a asp-controller="Patients" asp-action="Edit" asp-route-id="@patient.Id"
+                                           style="display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:8px;background:#f0f9ff;color:#0284c7;font-size:14px;text-decoration:none;border:1px solid #bae6fd;">
+                                            <i class="bi bi-pencil-square"></i>
+                                        </a>
+                                        <a asp-controller="Patients" asp-action="Delete" asp-route-id="@patient.Id"
+                                           style="display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:8px;background:#fef2f2;color:#dc2626;font-size:14px;text-decoration:none;border:1px solid #fecaca;">
+                                            <i class="bi bi-trash"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+                <p style="text-align:center;color:#94a3b8;font-size:13px;margin-top:16px;">
+                    Showing @Model.Count() patient@(Model.Count() != 1 ? "s" : "")
+                </p>
+            }
+            else
+            {
+                <div style="text-align:center;padding:80px 20px;background:white;border-radius:16px;border:1px dashed #cbd5e1;">
+                    <i class="bi bi-people" style="font-size:52px;color:#e2e8f0;display:block;margin-bottom:16px;"></i>
+                    <h3 style="font-size:18px;font-weight:700;color:#1e293b;margin-bottom:8px;">No patients found</h3>
+                    <p style="font-size:14px;color:#94a3b8;margin-bottom:24px;">No patients match your search or the list is empty.</p>
+                    <a asp-controller="Patients" asp-action="Create"
+                       style="display:inline-flex;align-items:center;gap:8px;background:#0284c7;color:white;padding:10px 20px;border-radius:10px;font-weight:600;font-size:14px;text-decoration:none;">
+                        <i class="bi bi-person-plus-fill"></i> Add First Patient
+                    </a>
+                </div>
+            }
+        </div>
+    </div>
+</div>

@@ -1,0 +1,131 @@
+@model List<Doctor>
+@{
+    Layout = "_DashboardLayout";
+    ViewData["Title"] = "Doctors";
+    string activeSpec = Context.Request.Query["specialization"].ToString();
+    string searchQuery = Context.Request.Query["search"];
+}
+
+@section TopBar {
+<form method="get" asp-controller="Doctors" asp-action="Index" class="search-form-wrapper">
+    <div class="search-bar">
+        <i class="bi bi-search text-muted"></i>
+        <input type="search" name="search" value="@searchQuery" placeholder="Search doctors by name, specialization..." onchange="this.form.submit()" />
+        @if (!string.IsNullOrEmpty(searchQuery))
+        {
+            <a asp-action="Index" class="clear-search-btn" title="Clear search"><i class="bi bi-x-lg"></i></a>
+        }
+    </div>
+    @if (!string.IsNullOrEmpty(activeSpec))
+    {
+        <input type="hidden" name="specialization" value="@activeSpec" />
+    }
+</form>
+}
+
+<div class="content">
+        <!-- Page Header & Actions -->
+        <div class="doctors-header-section">
+            <div class="page-title">
+                <h1>Doctors Directory</h1>
+                <p>Manage clinic medical staff and specialties (@Model.Count() active)</p>
+            </div>
+            <a class="btn-add-doctor" asp-controller="Doctors" asp-action="Create">
+                <i class="bi bi-plus-lg"></i> Add New Doctor
+            </a>
+        </div>
+
+        <!-- Specialization Filter Pills -->
+        <div class="specialization-filters">
+            @{
+                var specializations = new[] { "Cardiology", "Neurology", "Pediatrics", "Orthopedics", "Dermatology", "Dentistry" };
+            }
+            <a class="spec-pill @(string.IsNullOrEmpty(activeSpec) ? "active" : "")" href="/Doctors">
+                <i class="bi bi-grid-fill me-1"></i> All
+            </a>
+            @foreach (var spec in specializations)
+            {
+                <a class="spec-pill @(activeSpec == spec ? "active" : "")" href="/Doctors?specialization=@spec">
+                    @spec
+                </a>
+            }
+        </div>
+
+        @if (Model != null && Model.Any())
+        {
+            <div class="doctors-grid">
+                @foreach(Doctor doctor in Model){
+                    <article class="doctor-card">
+                        <div class="doctor-card-header">
+                            @{
+                                string initials = "DR"; 
+                                if (!string.IsNullOrEmpty(doctor.Name))
+                                {
+                                    var nameParts = doctor.Name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                                    if (nameParts.Length >= 2)
+                                    {
+                                        initials = $"{char.ToUpper(nameParts[0][0])}{char.ToUpper(nameParts[1][0])}";
+                                    }
+                                    else if (nameParts.Length == 1)
+                                    {
+                                        initials = nameParts[0].Substring(0, Math.Min(2, nameParts[0].Length)).ToUpper();
+                                    }
+                                }
+                            }
+                            @if (!string.IsNullOrEmpty(doctor.ImagePath))
+                            {
+                                <div class="doctor-avatar" style="overflow:hidden; background:none;">
+                                    <img src="@doctor.ImagePath" alt="@doctor.Name" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" />
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="doctor-avatar" style="overflow:hidden; background:none;">
+                                    <img src="~/images/user_default.jpg" alt="@doctor.Name" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" />
+                                </div>
+                            }
+                            <div class="doctor-info">
+                                <h2 class="doctor-name">
+                                    <a asp-controller="Doctors" asp-action="Details" asp-route-id="@doctor.Id"><span>Dr. </span>@doctor.Name</a>
+                                </h2>
+                                <span class="doctor-spec-badge">@doctor.Specialization</span>
+                            </div>
+                        </div>
+                        
+                        <p class="doctor-bio">@(string.IsNullOrEmpty(doctor.Biography) ? "No biography provided for this specialist yet." : doctor.Biography)</p>
+
+                        <div class="doctor-meta">
+                            <span class="rating-box"><i class="bi bi-star-fill text-warning"></i> 4.9</span>
+                            <span class="experience-box"><i class="bi bi-award me-1"></i> @doctor.yearsExperience Years Exp.</span>
+                        </div>
+
+                        <div class="doctor-actions">
+                            <a asp-controller="Doctors" asp-action="Details" asp-route-id="@doctor.Id" class="btn-action btn-details">
+                                <i class="bi bi-person-lines-fill"></i> Details
+                            </a>
+                            <a asp-controller="Doctors" asp-route-id="@doctor.Id" asp-action="Edit" class="btn-action btn-edit" title="Edit">
+                                <i class="bi bi-pencil-square"></i>
+                            </a>
+                            <a asp-controller="Doctors" asp-route-id="@doctor.Id" asp-action="Delete" class="btn-action btn-delete" title="Delete">
+                                <i class="bi bi-trash"></i>
+                            </a>
+                        </div>
+                    </article>
+                }
+            </div>
+        }
+        else
+        {
+            <!-- Empty State -->
+            <div class="empty-state">
+                <i class="bi bi-heart-pulse"></i>
+                <h3>No doctors found</h3>
+                <p>No specialists match your criteria or specialization filter at the moment.</p>
+                <a asp-controller="Doctors" asp-action="Index" class="btn-add-doctor mt-3" style="background: #475569;">
+                    <i class="bi bi-arrow-clockwise"></i> Reset Filters
+                </a>
+            </div>
+        }
+
+      </div>
+}

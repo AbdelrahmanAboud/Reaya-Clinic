@@ -1,0 +1,175 @@
+@using Microsoft.AspNetCore.Identity
+@using Reaya.Data
+@using Reaya.Models
+@inject UserManager<ApplicationUser> SidebarUserManager
+@{
+    var sidebarType = ViewData["SidebarType"] as string ?? "admin";
+    var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
+    var currentAction = ViewContext.RouteData.Values["action"]?.ToString();
+
+    // Always fetch the real logged-in user's data from Identity
+    string userName = "User";
+    string userRole = "Admin";
+
+    if (User.Identity?.IsAuthenticated == true)
+    {
+        var currentUser = SidebarUserManager.GetUserAsync(User).GetAwaiter().GetResult();
+        if (currentUser != null)
+        {
+            // Use FullName if available, fallback to email
+            userName = !string.IsNullOrEmpty(currentUser.FullName)
+                ? currentUser.FullName
+                : (currentUser.Email ?? "User");
+            var roles = SidebarUserManager.GetRolesAsync(currentUser).GetAwaiter().GetResult();
+            userRole = roles.FirstOrDefault() ?? "Admin";
+        }
+    }
+
+    string userInitials = "U";
+    if (!string.IsNullOrEmpty(userName))
+    {
+        var nameParts = userName.Split(new char[]{' ', '@', '.'}, StringSplitOptions.RemoveEmptyEntries);
+        if (nameParts.Length >= 2)
+            userInitials = $"{char.ToUpper(nameParts[0][0])}{char.ToUpper(nameParts[1][0])}";
+        else if (nameParts.Length == 1)
+            userInitials = nameParts[0].Substring(0, Math.Min(2, nameParts[0].Length)).ToUpper();
+    }
+}
+
+<!-- Mobile Menu Toggle -->
+<button class="mobile-menu-toggle" onclick="toggleSidebar()">
+    <i class="bi bi-list" style="font-size: 20px;"></i>
+</button>
+
+<!-- Sidebar Overlay -->
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<!-- Sidebar -->
+<aside class="sidebar">
+    <a class="brand" href="/">
+        <span class="brand-mark">
+
+<i class="bi bi-activity"></i>            
+            </span>
+        <span><strong>Reaya</strong><small>Clinic Management</small></span>
+    </a>
+    
+  @if (sidebarType == "admin")
+{
+    <p class="nav-label">CLINIC OPERATIONS</p>
+    <nav class="sidebar-nav">
+        <a class="@(currentController == "Home" && currentAction == "Overview" ? "active" : "")" href="/Home/Overview">
+            <i class="bi bi-grid-1x2 fs-5"></i>
+            Overview
+        </a>
+        <a class="@(currentController == "Doctors" ? "active" : "")" href="/Doctors">
+            <i class="bi bi-person-badge fs-5"></i>
+            Doctors
+        </a>
+        <a class="@(currentController == "Patients" ? "active" : "")" href="/Patients">
+            <i class="bi bi-people fs-5"></i>
+            Patients
+        </a>
+        <a class="@(currentController == "Appointments" ? "active" : "")" href="/Appointments">
+            <i class="bi bi-calendar-event fs-5"></i>
+            Scheduling
+        </a>
+    
+    </nav>
+    <div class="clinic-status-box" style="margin-top:20px;">
+        <strong>Clinic status</strong>
+        <p>All rooms operational. 3 walk-ins waiting.</p>
+        <span><i class="bi bi-activity"></i> Live sync active</span>
+    </div>
+}
+else if (sidebarType == "doctor")
+{
+    <p class="nav-label">Doctor Portal</p>
+ <nav class="sidebar-nav">
+    <a class="@(currentController == "DoctorDashboard" && currentAction == "MyDay" ? "active" : "")" href="/DoctorDashboard/MyDay">
+        <i class="bi bi-list-check fs-5"></i>
+        My day
+    </a>
+    <a class="@(currentController == "DoctorDashboard" && currentAction == "Consultation" ? "active" : "")" href="#">
+        <i class="bi bi-clipboard2-pulse fs-5"></i>
+        Consultation
+    </a>
+    <a class="@(currentController == "DoctorDashboard" && currentAction == "MyProfile" ? "active" : "")" href="/DoctorDashboard/MyProfile">
+        <i class="bi bi-person-circle fs-5"></i>
+        My profile
+    </a>
+</nav>
+    <div class="clinic-status-box" style="margin-top:20px;">
+        <strong>Clinic status</strong>
+        <p>All rooms operational. 5 walk-ins waiting.</p>
+        <span><i class="bi bi-activity"></i> Live sync active</span>
+    </div>
+}
+else if (sidebarType == "patient")
+{
+    <p class="nav-label">Patient Portal</p>
+    <nav class="sidebar-nav">
+        <a class="@(currentController == "PatientPortal" && currentAction == "MyAppointments" ? "active" : "")" href="/PatientPortal/MyAppointments">
+            <i class="bi bi-calendar-check fs-5"></i>
+            My appointments
+        </a>
+        <a class="@(currentController == "PatientPortal" && currentAction == "MyMedicalHistory" ? "active" : "")" href="/PatientPortal/MyMedicalHistory">
+            <i class="bi bi-journal-medical fs-5"></i>
+            Medical history
+        </a>
+        <a class="@(currentController == "PatientPortal" && currentAction == "BookAppointment" ? "active" : "")" href="/PatientPortal/BookAppointment">
+            <i class="bi bi-calendar-plus fs-5"></i>
+            Book appointment
+        </a>
+        <a class="@(currentController == "PatientPortal" && currentAction == "MyProfile" ? "active" : "")" href="/PatientPortal/MyProfile">
+            <i class="bi bi-person-circle fs-5"></i>
+            My profile
+        </a>
+    </nav>
+    <div class="clinic-status-box" style="margin-top:20px;">
+        <strong>Clinic status</strong>
+        <p>All rooms operational.</p>
+        <span><i class="bi bi-activity"></i> Live sync active</span>
+    </div>
+}
+    <div class="staff-card" style="display: flex; justify-content: space-between; align-items: center;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <span class="staff-avatar">@userInitials</span>
+            <span style="display: flex; flex-direction: column;">
+                <strong>@userName</strong>
+                <small>@userRole</small>
+            </span>
+        </div>
+        <form asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="/" method="post" style="margin: 0;">
+            <button type="submit" style="background: none; border: none; color: #ef4444; cursor: pointer; padding: 8px; border-radius: 8px; display: flex; align-items: center; justify-content: center; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#fee2e2'" onmouseout="this.style.backgroundColor='transparent'" title="Logout">
+                <i class="bi bi-box-arrow-right fs-5"></i>
+            </button>
+        </form>
+    </div>
+</aside>
+
+<script>
+function toggleSidebar() {
+    const sidebar = document.querySelector('.sidebar');
+    const overlay = document.querySelector('.sidebar-overlay');
+    
+    if (sidebar && overlay) {
+        sidebar.classList.toggle('active');
+        overlay.classList.toggle('active');
+    }
+}
+
+// Close sidebar when clicking on a navigation link (mobile)
+document.addEventListener('DOMContentLoaded', function() {
+    const navLinks = document.querySelectorAll('.sidebar-nav a');
+    navLinks.forEach(link => {
+        link.addEventListener('click', function() {
+            if (window.innerWidth <= 768) {
+                toggleSidebar();
+            }
+        });
+    });
+});
+</script>
+
+

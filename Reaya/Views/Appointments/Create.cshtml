@@ -1,0 +1,514 @@
+@model Appointment
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Book New Appointment – Rayaah Clinic</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="~/css/dashboard.css" />
+    <style>
+        .status-picker {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .status-option {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            height: 42px;
+            border-radius: 12px;
+            border: 1.5px solid #e2e8f0;
+            background: #f8fafc;
+            font-size: 12px;
+            font-weight: 700;
+            color: #64748b;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .status-option:hover {
+            border-color: #0ea5e9;
+            color: #0369a1;
+            background: #f0f9ff;
+        }
+        .status-option.selected.s-opt-confirmed {
+            background: #dbeafe;
+            border-color: #2563eb;
+            color: #1d4ed8;
+            box-shadow: 0 4px 12px rgba(37,99,235,0.2);
+        }
+        .status-option.selected.s-opt-pending {
+            background: #fef3c7;
+            border-color: #d97706;
+            color: #b45309;
+            box-shadow: 0 4px 12px rgba(217,119,6,0.2);
+        }
+        .status-option.selected.s-opt-completed {
+            background: #dcfce7;
+            border-color: #16a34a;
+            color: #15803d;
+            box-shadow: 0 4px 12px rgba(22,163,74,0.2);
+        }
+        .status-option.selected.s-opt-cancelled {
+            background: #fee2e2;
+            border-color: #dc2626;
+            color: #b91c1c;
+            box-shadow: 0 4px 12px rgba(220,38,38,0.2);
+        }
+        .create-layout-grid {
+            display: grid;
+            grid-template-columns: 1fr 340px;
+            gap: 24px;
+            align-items: start;
+        }
+        .side-card {
+            background: #fff;
+            border: 1px solid #e8edf3;
+            border-radius: 18px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(15,23,42,0.04);
+            margin-bottom: 20px;
+        }
+        .side-card h3 {
+            font-size: 14px;
+            font-weight: 800;
+            color: #0f172a;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .summary-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 12px;
+        }
+        .summary-row:last-child {
+            border-bottom: none;
+        }
+        .summary-row label { color: #94a3b8; font-weight: 600; }
+        .summary-row strong { color: #0f172a; }
+    </style>
+</head>
+<body>
+<div class="shell">
+
+    <!-- Sidebar -->
+    @Html.Partial("_Sidebar")
+
+    <!-- Main Content -->
+    <div class="main">
+        <!-- Topbar -->
+    
+
+        <!-- Content Body -->
+        <div class="content">
+            <!-- Navigation Back Button -->
+            <div style="margin-bottom: 8px;">
+                <a asp-controller="Appointments" asp-action="Index" style="text-decoration:none; font-size:13px; font-weight:700; color:#0284c7; display:inline-flex; align-items:center; gap:6px;">
+                    <i class="bi bi-arrow-left"></i> Back to Appointments
+                </a>
+            </div>
+
+            <!-- Page Title -->
+            <div class="page-title" style="margin-bottom: 20px;">
+                <h1>Book New Appointment</h1>
+                <p>Register patient visit details, select assigned doctor, date, and time slot</p>
+            </div>
+
+            <!-- Main Layout Grid (Form + Summary Side Panel) -->
+            <div class="create-layout-grid">
+
+                <!-- Left Panel: Booking Form Card -->
+                <form asp-controller="Appointments" asp-action="CurrentCreate" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="Status" id="hiddenStatus" value="1" />
+
+                <div class="form-card" style="margin-top:0;">
+                    <div asp-validation-summary="All" class="text-danger" style="margin-bottom:12px; font-size:12px; font-weight:700; list-style:none;"></div>
+
+                    <!-- Visual Status Picker -->
+                    <p class="time-slots-label" style="margin-bottom:8px;">Appointment Status</p>
+                    <div class="status-picker">
+                        <div class="status-option selected s-opt-confirmed" onclick="setStatus(1,this)">
+                            <i class="bi bi-check-circle-fill"></i> Confirmed
+                        </div>
+                        <div class="status-option s-opt-pending" onclick="setStatus(0,this)">
+                            <i class="bi bi-clock-history"></i> Pending
+                        </div>
+                        <div class="status-option s-opt-completed" onclick="setStatus(2,this)">
+                            <i class="bi bi-check2-all"></i> Completed
+                        </div>
+                        <div class="status-option s-opt-cancelled" onclick="setStatus(3,this)">
+                            <i class="bi bi-x-circle-fill"></i> Cancelled
+                        </div>
+                    </div>
+
+                    <!-- Patient Type Toggle -->
+                    <div style="display:flex; align-items:center; gap:10px; margin-bottom:16px; padding:12px 14px; background:#f8fafc; border-radius:12px; border:1.5px solid #e2e8f0;">
+                        <i class="bi bi-person-fill" style="color:#0284c7; font-size:16px;"></i>
+                        <span style="font-size:13px; font-weight:600; color:#475569;">Patient Type:</span>
+                        <label style="display:flex; align-items:center; gap:6px; font-size:13px; font-weight:600; color:#0f172a; cursor:pointer;">
+                            <input type="radio" name="patientType" value="registered" id="typeRegistered" onchange="togglePatientType()" checked />
+                            Registered Patient
+                        </label>
+                        <label style="display:flex; align-items:center; gap:6px; font-size:13px; font-weight:600; color:#0f172a; cursor:pointer;">
+                            <input type="radio" name="patientType" value="walkin" id="typeWalkin" onchange="togglePatientType()" />
+                            Walk-in / New Patient
+                        </label>
+                    </div>
+
+                    <!-- Registered Patient Section -->
+                    <div id="registeredSection">
+                        <div class="field">
+                            <label>Search Registered Patient</label>
+                            <!-- Hidden input that actually posts the PatientId -->
+                            <input type="hidden" asp-for="PatientId" id="selectedPatientId" />
+
+                            <div style="position:relative;">
+                                <div class="search-input-wrap">
+                                    <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 5 5"/></svg>
+                                    <input type="text" id="patientSearchBox"
+                                           placeholder="Type patient name or phone..."
+                                           autocomplete="off"
+                                           oninput="searchPatients(this.value)" />
+                                </div>
+                                <!-- Dropdown results -->
+                                <div id="patientDropdown" style="display:none; position:absolute; z-index:100; width:100%; background:#fff; border:1.5px solid #e2e8f0; border-radius:12px; box-shadow:0 8px 24px rgba(15,23,42,0.10); margin-top:4px; overflow:hidden;"></div>
+                            </div>
+
+                            <!-- Selected patient confirmation card -->
+                            <div id="selectedPatientCard" style="display:none; margin-top:10px; padding:10px 14px; background:#f0f9ff; border:1.5px solid #bae6fd; border-radius:10px; display:none; align-items:center; gap:10px;">
+                                <i class="bi bi-person-check-fill" style="color:#0284c7; font-size:18px;"></i>
+                                <div>
+                                    <strong id="selectedPatientName" style="font-size:13px; color:#0f172a; display:block;"></strong>
+                                    <span id="selectedPatientPhone" style="font-size:11px; color:#64748b;"></span>
+                                </div>
+                                <button type="button" onclick="clearPatient()" style="margin-left:auto; background:none; border:none; color:#94a3b8; cursor:pointer; font-size:16px;">✕</button>
+                            </div>
+                            <span asp-validation-for="PatientId" class="text-danger" style="font-size:11px;"></span>
+                        </div>
+                    </div>
+
+                    <!-- Walk-in Patient Section -->
+                    <div id="walkinSection" style="display:none;">
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px;">
+                            <div class="field">
+                                <label asp-for="GuestPatientName">Patient Full Name</label>
+                                <input asp-for="GuestPatientName" type="text" placeholder="e.g. Ahmed Mohamed..." />
+                                <span asp-validation-for="GuestPatientName" class="text-danger" style="font-size:11px;"></span>
+                            </div>
+                            <div class="field">
+                                <label asp-for="GuestPatientPhone">Phone Number</label>
+                                <input asp-for="GuestPatientPhone" type="tel" placeholder="e.g. 01012345678" />
+                                <span asp-validation-for="GuestPatientPhone" class="text-danger" style="font-size:11px;"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Department & Doctor Cascading Selection -->
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-bottom:16px;">
+                        <div class="field">
+                            <label for="specializationSelect"> Specialization</label>
+                            <select id="specializationSelect" onchange="onDepartmentChange(this.value)" style="width:100%; height:44px; border-radius:12px; border:1.5px solid #e2e8f0; padding:0 14px; font-size:13px; font-weight:600; color:#0f172a; background:#f8fafc; outline:none; transition:border-color 0.2s;">
+                                <option value="">-- Select Specialization --</option>
+                                @if (ViewBag.Specializations != null)
+                                {
+                                    foreach (var spec in (List<string>)ViewBag.Specializations)
+                                    {
+                                        <option value="@spec">@spec</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label asp-for="DoctorId">Attending Doctor</label>
+                            <select asp-for="DoctorId" id="doctorSelect" onchange="onDoctorChange(this)" style="width:100%; height:44px; border-radius:12px; border:1.5px solid #e2e8f0; padding:0 14px; font-size:13px; font-weight:600; color:#0f172a; background:#f8fafc; outline:none; transition:border-color 0.2s;">
+                                <option value="">-- First Select Department --</option>
+                            </select>
+                            <span asp-validation-for="DoctorId" class="text-danger" style="font-size:11px;"></span>
+                        </div>
+                    </div>
+
+                    <!-- Appointment Date & Time -->
+                    <div class="field" style="margin-bottom:20px;">
+                        <label asp-for="AppointmentDate">Appointment Date &amp; Time</label>
+                        <input asp-for="AppointmentDate" type="datetime-local" onchange="updateSummaryDateTime(this.value)" />
+                        <span asp-validation-for="AppointmentDate" class="text-danger" style="font-size:11px;"></span>
+                    </div>
+
+                    <!-- Medical Notes -->
+                    <div class="field">
+                        <label asp-for="Notes">Reason for Visit / Medical Notes</label>
+                        <textarea asp-for="Notes" rows="4" style="width:100%; border:1.5px solid #e2e8f0; border-radius:10px; padding:12px; font-size:13px; font-family:inherit; color:#1e293b; outline:none; background:#f8fafc; resize:vertical;" placeholder="Add patient symptoms, medical history notes, or special instructions..."></textarea>
+                        <span asp-validation-for="Notes" class="text-danger" style="font-size:11px;"></span>
+                    </div>
+
+                    <!-- Action Bar Footer -->
+                    <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:24px; padding-top:16px; border-top:1px solid #f1f5f9;">
+                        <a asp-controller="Appointments" asp-action="Index" style="text-decoration:none; display:inline-flex; align-items:center; justify-content:center; height:44px; padding:0 24px; border-radius:12px; border:1.5px solid #e2e8f0; background:#fff; font-size:14px; font-weight:700; color:#64748b; transition:all 0.18s;">
+                            Cancel
+                        </a>
+                        <button type="submit" class="create-btn" style="width:auto; padding:0 32px; border:none; cursor:pointer;">
+                            <i class="bi bi-check-circle-fill"></i> Save &amp; Confirm Booking
+                        </button>
+                    </div>
+
+                </div>
+                </form>
+
+                <!-- Right Information Side Panel -->
+                <div>
+
+                    <!-- Booking Summary Card -->
+                    <div class="side-card">
+                        <h3>Live Booking Summary</h3>
+                        <div class="summary-row">
+                            <label>Patient</label>
+                            <strong id="summaryPatient">Not selected</strong>
+                        </div>
+                        <div class="summary-row">
+                            <label>Department</label>
+                            <strong id="summaryDepartment">Not selected</strong>
+                        </div>
+                        <div class="summary-row">
+                            <label>Doctor</label>
+                            <strong id="summaryDoctor">Not selected</strong>
+                        </div>
+                        <div class="summary-row">
+                            <label>Scheduled Date</label>
+                            <strong id="summaryDate">Not set</strong>
+                        </div>
+                        <div class="summary-row">
+                            <label>Selected Time</label>
+                            <strong id="summaryTime" style="color:#0284c7;">10:30 AM</strong>
+                        </div>
+                        <div class="summary-row" style="margin-top:6px; padding-top:12px; border-top:1.5px solid #e2e8f0;">
+                            <label style="font-size:13px; font-weight:700; color:#0f172a;">Consultation Fee</label>
+                            <strong id="summaryFee" style="font-size:16px; font-weight:800; color:#15803d;">-</strong>
+                        </div>
+                    </div>
+
+                    <!-- Assigned Specialist Widget -->
+                    <div class="side-card" id="specialistWidget" style="display:none;">
+                        <h3><i class="bi bi-hospital" style="color:#0ea5e9;"></i> Specialist &amp; Room</h3>
+                        <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
+                            <div id="specialistAvatar" style="width:42px; height:42px; border-radius:12px; background:#e0f2fe; color:#0284c7; display:grid; place-items:center; font-size:16px; font-weight:800;">
+                                DR
+                            </div>
+                            <div>
+                                <strong id="specialistCardName" style="font-size:13px; color:#0f172a; display:block;">-</strong>
+                                <span id="specialistCardSpec" style="font-size:11px; color:#64748b;">-</span>
+                            </div>
+                        </div>
+                        <div style="font-size:12px; color:#475569; border-top:1px solid #f1f5f9; padding-top:10px; display:flex; flex-direction:column; gap:6px;">
+                            <div><i class="bi bi-geo-alt" style="color:#94a3b8; margin-right:4px;"></i> Consultation Clinic</div>
+                        </div>
+                    </div>
+
+                    <!-- Live Notice Box -->
+                    <div class="side-card" style="background:#f0f9ff; border-color:#bae6fd;">
+                        <h3 style="color:#0369a1;"><i class="bi bi-info-circle"></i> Instant Confirmation</h3>
+                        <p style="font-size:12px; color:#0369a1; line-height:1.5; margin:0;">
+                            Saving this booking will automatically reserve the slot and register the appointment in the clinic system.
+                        </p>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // ── Time slot selection ──────────────────────────────
+    function selectSlot(btn, timeText) {
+        document.querySelectorAll('.time-slot').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        document.getElementById('summaryTime').textContent = timeText;
+    }
+
+    // ── Status picker ────────────────────────────────────
+    function setStatus(val, el) {
+        document.querySelectorAll('.status-option').forEach(o => o.classList.remove('selected'));
+        el.classList.add('selected');
+        document.getElementById('hiddenStatus').value = val;
+    }
+
+    // ── Patient type toggle ──────────────────────────────
+    function togglePatientType() {
+        const isWalkin = document.getElementById('typeWalkin').checked;
+        document.getElementById('registeredSection').style.display = isWalkin ? 'none' : 'block';
+        document.getElementById('walkinSection').style.display   = isWalkin ? 'block' : 'none';
+        if (isWalkin) {
+            clearPatient();
+            const walkinName = document.querySelector('[name="GuestPatientName"]');
+            if (walkinName) {
+                walkinName.addEventListener('input', function() {
+                    document.getElementById('summaryPatient').textContent = this.value || 'Walk-in Patient';
+                });
+            }
+        } else {
+            document.getElementById('summaryPatient').textContent = 'Not selected';
+        }
+    }
+
+    // ── Live patient search ──────────────────────────────
+    let searchTimeout = null;
+
+    function searchPatients(query) {
+        clearTimeout(searchTimeout);
+        const dropdown = document.getElementById('patientDropdown');
+        if (query.length < 2) { dropdown.style.display = 'none'; return; }
+
+        searchTimeout = setTimeout(() => {
+            fetch(`/Appointments/SearchPatients?q=${encodeURIComponent(query)}`)
+                .then(r => r.json())
+                .then(patients => {
+                    if (patients.length === 0) {
+                        dropdown.innerHTML = `<div style="padding:14px 16px; font-size:13px; color:#94a3b8;">No registered patients found</div>`;
+                    } else {
+                        dropdown.innerHTML = patients.map(p => `
+                            <div onclick="selectPatient(${p.id}, '${p.name}', '${p.phoneNo}')"
+                                 style="padding:10px 16px; cursor:pointer; font-size:13px; border-bottom:1px solid #f1f5f9; transition:background 0.15s;"
+                                 onmouseover="this.style.background='#f0f9ff'"
+                                 onmouseout="this.style.background='#fff'">
+                                <strong style="color:#0f172a;">${p.name}</strong>
+                                <span style="color:#94a3b8; margin-left:8px;">${p.phoneNo}</span>
+                                <span style="float:right; font-size:11px; background:#e0f2fe; color:#0284c7; padding:2px 8px; border-radius:6px;">ID: ${p.id}</span>
+                            </div>`).join('');
+                    }
+                    dropdown.style.display = 'block';
+                });
+        }, 300);
+    }
+
+    function selectPatient(id, name, phone) {
+        document.getElementById('selectedPatientId').value = id;
+        document.getElementById('patientSearchBox').value = name;
+        document.getElementById('patientDropdown').style.display = 'none';
+
+        // Show confirmation card & update summary
+        document.getElementById('selectedPatientName').textContent = name;
+        document.getElementById('selectedPatientPhone').textContent = phone;
+        document.getElementById('selectedPatientCard').style.display = 'flex';
+        document.getElementById('summaryPatient').textContent = name;
+    }
+
+    function clearPatient() {
+        document.getElementById('selectedPatientId').value = '';
+        document.getElementById('patientSearchBox').value = '';
+        document.getElementById('selectedPatientCard').style.display = 'none';
+        document.getElementById('patientDropdown').style.display = 'none';
+        document.getElementById('summaryPatient').textContent = 'Not selected';
+    }
+
+    // ── Cascading Dropdown: Department -> Doctor ──────────
+    function onDepartmentChange(specialization) {
+        const doctorSelect = document.getElementById('doctorSelect');
+        doctorSelect.innerHTML = '<option value="">Loading doctors...</option>';
+        doctorSelect.disabled = true;
+
+        document.getElementById('summaryDepartment').textContent = specialization || 'Not selected';
+        resetDoctorSummary();
+
+        if (!specialization) {
+            doctorSelect.innerHTML = '<option value="">-- First Select Department --</option>';
+            doctorSelect.disabled = false;
+            return;
+        }
+
+        fetch(`/Appointments/GetDoctorsBySpecialization?specialization=${encodeURIComponent(specialization)}`)
+            .then(r => r.json())
+            .then(doctors => {
+                doctorSelect.disabled = false;
+                if (doctors.length === 0) {
+                    doctorSelect.innerHTML = '<option value="">No doctors in this department</option>';
+                } else {
+                    let html = '<option value="">-- Select Doctor --</option>';
+                    doctors.forEach(d => {
+                        html += `<option value="${d.id}" data-fee="${d.consultationFee}" data-spec="${d.specialization}">${d.name} (${d.consultationFee} EGP)</option>`;
+                    });
+                    doctorSelect.innerHTML = html;
+                }
+            })
+            .catch(() => {
+                doctorSelect.disabled = false;
+                doctorSelect.innerHTML = '<option value="">Error loading doctors</option>';
+            });
+    }
+
+    function onDoctorChange(selectEl) {
+        const docId = selectEl.value;
+        const selectedOption = selectEl.options[selectEl.selectedIndex];
+
+        if (docId && selectedOption && selectedOption.value !== "") {
+            const fullText = selectedOption.text;
+            const docName = fullText.includes(' (') ? fullText.substring(0, fullText.indexOf(' (')) : fullText;
+            const fee = selectedOption.getAttribute('data-fee');
+            const spec = selectedOption.getAttribute('data-spec');
+
+            // Update summary
+            document.getElementById('summaryDoctor').textContent = docName;
+            document.getElementById('summaryFee').textContent = fee ? fee + ' EGP' : '-';
+
+            // Update specialist card
+            document.getElementById('specialistCardName').textContent = docName;
+            document.getElementById('specialistCardSpec').textContent = (spec || 'General') + ' Department';
+
+            const cleanName = docName.replace(/^Dr\.\s*/i, '').trim();
+            const initials = cleanName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() || 'DR';
+            document.getElementById('specialistAvatar').textContent = initials;
+            document.getElementById('specialistWidget').style.display = 'block';
+        } else {
+            resetDoctorSummary();
+        }
+    }
+
+    function resetDoctorSummary() {
+        document.getElementById('summaryDoctor').textContent = 'Not selected';
+        document.getElementById('summaryFee').textContent = '-';
+        document.getElementById('specialistWidget').style.display = 'none';
+    }
+
+    function updateSummaryDateTime(val) {
+        if (!val) {
+            document.getElementById('summaryDate').textContent = 'Not set';
+            document.getElementById('summaryTime').textContent = 'Not set';
+            return;
+        }
+        const d = new Date(val);
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const month = months[d.getMonth()];
+        const day = d.getDate();
+        const year = d.getFullYear();
+        document.getElementById('summaryDate').textContent = `${month} ${day}, ${year}`;
+
+        let hours = d.getHours();
+        const minutes = d.getMinutes().toString().padStart(2, '0');
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12;
+        hours = hours ? hours : 12;
+        const strHours = hours.toString().padStart(2, '0');
+        document.getElementById('summaryTime').textContent = `${strHours}:${minutes} ${ampm}`;
+    }
+
+    // Close patient dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('#registeredSection')) {
+            document.getElementById('patientDropdown').style.display = 'none';
+        }
+    });
+</script>
+</body>
+</html>

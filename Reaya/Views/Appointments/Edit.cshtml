@@ -1,0 +1,501 @@
+@model Appointment
+@{
+    Layout = null;
+    bool isWalkin = Model?.PatientId == null;
+    string patientDisplayName = isWalkin ? (Model?.GuestPatientName ?? "Walk-in Patient") : (Model?.Patient?.Name ?? "Registered Patient");
+    string patientDisplayPhone = isWalkin ? (Model?.GuestPatientPhone ?? "-") : (Model?.Patient?.PhoneNo ?? "-");
+    string patientInitials = !string.IsNullOrWhiteSpace(patientDisplayName) 
+        ? (patientDisplayName.Length >= 2 ? patientDisplayName.Substring(0, 2).ToUpper() : patientDisplayName.ToUpper()) 
+        : "PT";
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Edit Appointment #@Model?.Id – Rayaah Clinic</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="~/css/dashboard.css" />
+    <style>
+        .status-picker {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .status-option {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            height: 42px;
+            border-radius: 12px;
+            border: 1.5px solid #e2e8f0;
+            background: #f8fafc;
+            font-size: 12px;
+            font-weight: 700;
+            color: #64748b;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .status-option:hover {
+            border-color: #0ea5e9;
+            color: #0369a1;
+            background: #f0f9ff;
+        }
+        .status-option.selected.s-opt-confirmed {
+            background: #dbeafe;
+            border-color: #2563eb;
+            color: #1d4ed8;
+            box-shadow: 0 4px 12px rgba(37,99,235,0.2);
+        }
+        .status-option.selected.s-opt-pending {
+            background: #fef3c7;
+            border-color: #d97706;
+            color: #b45309;
+            box-shadow: 0 4px 12px rgba(217,119,6,0.2);
+        }
+        .status-option.selected.s-opt-completed {
+            background: #dcfce7;
+            border-color: #16a34a;
+            color: #15803d;
+            box-shadow: 0 4px 12px rgba(22,163,74,0.2);
+        }
+        .status-option.selected.s-opt-cancelled {
+            background: #fee2e2;
+            border-color: #dc2626;
+            color: #b91c1c;
+            box-shadow: 0 4px 12px rgba(220,38,38,0.2);
+        }
+        .edit-layout-grid {
+            display: grid;
+            grid-template-columns: 1fr 340px;
+            gap: 24px;
+            align-items: start;
+        }
+        .patient-banner {
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            border: 1px solid #e8edf3;
+            border-radius: 18px;
+            padding: 18px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 10px rgba(15,23,42,0.04);
+            margin-bottom: 20px;
+        }
+        .side-card {
+            background: #fff;
+            border: 1px solid #e8edf3;
+            border-radius: 18px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(15,23,42,0.04);
+            margin-bottom: 20px;
+        }
+        .side-card h3 {
+            font-size: 14px;
+            font-weight: 800;
+            color: #0f172a;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .summary-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 12px;
+        }
+        .summary-row:last-child {
+            border-bottom: none;
+        }
+        .summary-row label { color: #94a3b8; font-weight: 600; }
+        .summary-row strong { color: #0f172a; }
+    </style>
+</head>
+<body>
+<div class="shell">
+
+    <!-- Sidebar -->
+    @Html.Partial("_Sidebar")
+
+    <!-- Main Content -->
+    <div class="main">
+        <!-- Topbar -->
+        <header class="topbar">
+            <div class="search-bar">
+                <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 5 5"/></svg>
+                <input type="search" placeholder="Search patients, doctors, appointments..." />
+            </div>
+            
+        </header>
+
+        <!-- Content Body -->
+        <div class="content">
+            <!-- Navigation Back Button -->
+            <div style="margin-bottom: 8px;">
+                <a asp-controller="Appointments" asp-action="Index" style="text-decoration:none; font-size:13px; font-weight:700; color:#0284c7; display:inline-flex; align-items:center; gap:6px;">
+                    <i class="bi bi-arrow-left"></i> Back to Appointments
+                </a>
+            </div>
+
+            <!-- Page Title -->
+            <div class="page-title" style="margin-bottom: 20px;">
+                <h1>Edit / Reschedule Appointment</h1>
+                <p>Modify appointment details, assigned doctor, date &amp; time, or patient information</p>
+            </div>
+
+            <!-- Patient Quick Info Banner -->
+            <div class="patient-banner">
+                <div style="display:flex; align-items:center; gap:16px;">
+                    @if (!isWalkin && Model?.Patient != null && !string.IsNullOrEmpty(Model.Patient.ImagePath))
+                    {
+                        <div style="width:48px; height:48px; border-radius:50%; overflow:hidden;">
+                            <img src="@(Model.Patient.ImagePath.Replace("\\", "/"))" alt="@Model.Patient.Name" style="width:100%;height:100%;object-fit:cover;" />
+                        </div>
+                    }
+                    else
+                    {
+                        <div style="width:48px; height:48px; border-radius:50%; overflow:hidden;">
+                            <img src="~/images/user_default.jpg" alt="@patientDisplayName" style="width:100%;height:100%;object-fit:cover;" />
+                        </div>
+                    }
+                    <div>
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <h3 id="patientBannerName" style="font-size:16px; font-weight:800; color:#0f172a; margin:0;">@patientDisplayName</h3>
+                            <span class="badge-status @(isWalkin ? "s-pending" : "s-confirmed")">
+                                @(isWalkin ? "Walk-in Patient" : "Registered Patient")
+                            </span>
+                        </div>
+                        <span style="font-size:12px; color:#64748b; margin-top:2px; display:block;">
+                            Phone: <strong>@patientDisplayPhone</strong>
+                            @if (!isWalkin && !string.IsNullOrEmpty(Model?.Patient?.Email))
+                            {
+                                <span> &nbsp;•&nbsp; Email: <strong>@Model.Patient.Email</strong></span>
+                            }
+                        </span>
+                    </div>
+                </div>
+                <div style="text-align:right;">
+                    <span style="font-size:11px; font-weight:700; color:#94a3b8; text-transform:uppercase;">Appointment Ref</span>
+                    <div style="font-family:monospace; font-size:16px; font-weight:800; color:#0284c7;">#A-@Model?.Id</div>
+                </div>
+            </div>
+
+            <!-- Main Edit Form & Sidebar Grid -->
+            <div class="edit-layout-grid">
+
+                <!-- Left Form Panel -->
+                <form asp-controller="Appointments" asp-action="CurrentEdit" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="Id" />
+                <input type="hidden" asp-for="Status" id="hiddenStatus" value="@((int)(Model?.Status ?? AppointmentStatus.Confirmed))" />
+                <input type="hidden" asp-for="PatientId" id="selectedPatientId" />
+
+                <div class="form-card" style="margin-top:0;">
+                    <div asp-validation-summary="All" class="text-danger" style="margin-bottom:12px; font-size:12px; font-weight:700; list-style:none;"></div>
+
+                    <!-- Visual Status Picker -->
+                    <p class="time-slots-label" style="margin-bottom:8px;">Update Status</p>
+                    <div class="status-picker">
+                        <div class="status-option @(Model?.Status == AppointmentStatus.Confirmed ? "selected" : "") s-opt-confirmed" onclick="setStatus(1,this)">
+                            <i class="bi bi-check-circle-fill"></i> Confirmed
+                        </div>
+                        <div class="status-option @(Model?.Status == AppointmentStatus.Pending ? "selected" : "") s-opt-pending" onclick="setStatus(0,this)">
+                            <i class="bi bi-clock-history"></i> Pending
+                        </div>
+                        <div class="status-option @(Model?.Status == AppointmentStatus.Completed ? "selected" : "") s-opt-completed" onclick="setStatus(2,this)">
+                            <i class="bi bi-check2-all"></i> Completed
+                        </div>
+                        <div class="status-option @(Model?.Status == AppointmentStatus.Cancelled ? "selected" : "") s-opt-cancelled" onclick="setStatus(3,this)">
+                            <i class="bi bi-x-circle-fill"></i> Cancelled
+                        </div>
+                    </div>
+
+                    @if (isWalkin)
+                    {
+                        <!-- Walk-in Patient Editable Fields (No Email Needed) -->
+                        <div style="margin-bottom:16px; padding:14px; background:#fffbeb; border-radius:12px; border:1.5px solid #fde68a;">
+                            <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px; font-size:13px; font-weight:700; color:#b45309;">
+                                <i class="bi bi-person-fill"></i> Walk-in / Unregistered Patient Details
+                            </div>
+                            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:14px;">
+                                <div class="field" style="margin-bottom:0;">
+                                    <label asp-for="GuestPatientName">Patient Full Name</label>
+                                    <input asp-for="GuestPatientName" type="text" placeholder="e.g. Ahmed Mohamed..." oninput="updateGuestPatientName(this.value)" />
+                                    <span asp-validation-for="GuestPatientName" class="text-danger" style="font-size:11px;"></span>
+                                </div>
+                                <div class="field" style="margin-bottom:0;">
+                                    <label asp-for="GuestPatientPhone">Phone Number</label>
+                                    <input asp-for="GuestPatientPhone" type="tel" placeholder="e.g. 01012345678" />
+                                    <span asp-validation-for="GuestPatientPhone" class="text-danger" style="font-size:11px;"></span>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <!-- Registered Patient Card Info (Linked to Patients table) -->
+                        <div style="margin-bottom:16px; padding:14px; background:#f0f9ff; border-radius:12px; border:1.5px solid #bae6fd;">
+                            <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px; font-size:13px; font-weight:700; color:#0369a1;">
+                                <i class="bi bi-person-check-fill"></i> Registered Patient Account
+                            </div>
+                            <div style="display:flex; justify-content:space-between; font-size:12px; color:#475569;">
+                                <span>Name: <strong style="color:#0f172a;">@Model?.Patient?.Name</strong></span>
+                                <span>Phone: <strong style="color:#0f172a;">@Model?.Patient?.PhoneNo</strong></span>
+                                <span>Email: <strong style="color:#0f172a;">@(Model?.Patient?.Email ?? "N/A")</strong></span>
+                            </div>
+                        </div>
+                    }
+
+                    <!-- Department & Doctor Cascading Selection -->
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-bottom:16px;">
+                        <div class="field">
+                            <label for="specializationSelect">Specialization</label>
+                            <select id="specializationSelect" onchange="onDepartmentChange(this.value)" style="width:100%; height:44px; border-radius:12px; border:1.5px solid #e2e8f0; padding:0 14px; font-size:13px; font-weight:600; color:#0f172a; background:#f8fafc; outline:none;">
+                                <option value="">-- Select Specialization --</option>
+                                @if (ViewBag.Specializations != null)
+                                {
+                                    foreach (var spec in (List<string>)ViewBag.Specializations)
+                                    {
+                                        if (Model?.Doctor?.Specialization == spec)
+                                        {
+                                            <option value="@spec" selected>@spec</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="@spec">@spec</option>
+                                        }
+                                    }
+                                }
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label asp-for="DoctorId">Attending Doctor</label>
+                            <select asp-for="DoctorId" id="doctorSelect" onchange="onDoctorChange(this)" style="width:100%; height:44px; border-radius:12px; border:1.5px solid #e2e8f0; padding:0 14px; font-size:13px; font-weight:600; color:#0f172a; background:#f8fafc; outline:none;">
+                                @if (ViewBag.DoctorsInSpecialization != null)
+                                {
+                                    foreach (var doc in (List<Doctor>)ViewBag.DoctorsInSpecialization)
+                                    {
+                                        if (doc.Id == Model?.DoctorId)
+                                        {
+                                            <option value="@doc.Id" data-fee="@doc.ConsultationFee" data-spec="@doc.Specialization" selected>@doc.Name (@doc.ConsultationFee EGP)</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="@doc.Id" data-fee="@doc.ConsultationFee" data-spec="@doc.Specialization">@doc.Name (@doc.ConsultationFee EGP)</option>
+                                        }
+                                    }
+                                }
+                                else if (Model?.Doctor != null)
+                                {
+                                    <option value="@Model.Doctor.Id" data-fee="@Model.Doctor.ConsultationFee" data-spec="@Model.Doctor.Specialization" selected>@Model.Doctor.Name (@Model.Doctor.ConsultationFee EGP)</option>
+                                }
+                                else
+                                {
+                                    <option value="">-- First Select Specialization --</option>
+                                }
+                            </select>
+                            <span asp-validation-for="DoctorId" class="text-danger" style="font-size:11px;"></span>
+                        </div>
+                    </div>
+
+                    <!-- Appointment Date & Time -->
+                    <div class="field" style="margin-bottom:16px;">
+                        <label asp-for="AppointmentDate">Appointment Date &amp; Time</label>
+                        <input asp-for="AppointmentDate" type="datetime-local" value="@Model?.AppointmentDate.ToString("yyyy-MM-ddTHH:mm")" onchange="updateSummaryDateTime(this.value)" />
+                        <span asp-validation-for="AppointmentDate" class="text-danger" style="font-size:11px;"></span>
+                    </div>
+
+                    <!-- Medical Notes / Change Reason -->
+                    <div class="field">
+                        <label asp-for="Notes">Reason for Modification &amp; Medical Notes</label>
+                        <textarea asp-for="Notes" rows="4" style="width:100%; border:1.5px solid #e2e8f0; border-radius:10px; padding:12px; font-size:13px; font-family:inherit; color:#1e293b; outline:none; background:#f8fafc; resize:vertical;" placeholder="Add notes or reason for rescheduling..."></textarea>
+                        <span asp-validation-for="Notes" class="text-danger" style="font-size:11px;"></span>
+                    </div>
+
+                    <!-- Action Bar Footer -->
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:24px; padding-top:16px; border-top:1px solid #f1f5f9;">
+                        <a asp-controller="Appointments" asp-action="Delete" asp-route-id="@Model?.Id" style="text-decoration:none; color:#ef4444; font-size:13px; font-weight:700; display:inline-flex; align-items:center; gap:6px;">
+                            <i class="bi bi-trash3"></i> Delete Appointment
+                        </a>
+                        <div style="display:flex; gap:12px;">
+                            <a asp-controller="Appointments" asp-action="Index" style="text-decoration:none; display:inline-flex; align-items:center; justify-content:center; height:44px; padding:0 24px; border-radius:12px; border:1.5px solid #e2e8f0; background:#fff; font-size:14px; font-weight:700; color:#64748b;">
+                                Cancel
+                            </a>
+                            <button type="submit" class="create-btn" style="width:auto; padding:0 32px; border:none; cursor:pointer;">
+                                <i class="bi bi-check-circle-fill"></i> Save Changes
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+                </form>
+
+                <!-- Right Information Side Panel -->
+                <div>
+                    <!-- Live Booking Summary Card -->
+                    <div class="side-card">
+                        <h3>Live Edit Summary</h3>
+                        <div class="summary-row">
+                            <label>Patient</label>
+                            <strong id="summaryPatient">@patientDisplayName</strong>
+                        </div>
+                        <div class="summary-row">
+                            <label>Department</label>
+                            <strong id="summaryDepartment">@(Model?.Doctor?.Specialization ?? "Not selected")</strong>
+                        </div>
+                        <div class="summary-row">
+                            <label>Doctor</label>
+                            <strong id="summaryDoctor">@(Model?.Doctor?.Name ?? "Not selected")</strong>
+                        </div>
+                        <div class="summary-row">
+                            <label>Scheduled Date</label>
+                            <strong id="summaryDate">@(Model?.AppointmentDate.ToString("MMM d, yyyy", System.Globalization.CultureInfo.InvariantCulture) ?? "Not set")</strong>
+                        </div>
+                        <div class="summary-row">
+                            <label>Selected Time</label>
+                            <strong id="summaryTime" style="color:#0284c7;">@(Model?.AppointmentDate.ToString("hh:mm tt", System.Globalization.CultureInfo.InvariantCulture) ?? "Not set")</strong>
+                        </div>
+                        <div class="summary-row" style="margin-top:6px; padding-top:12px; border-top:1.5px solid #e2e8f0;">
+                            <label style="font-size:13px; font-weight:700; color:#0f172a;">Consultation Fee</label>
+                            <strong id="summaryFee" style="font-size:16px; font-weight:800; color:#15803d;">@(Model?.Doctor != null ? Model.Doctor.ConsultationFee + " EGP" : "-")</strong>
+                        </div>
+                    </div>
+
+                    <!-- Assigned Specialist Widget -->
+                    <div class="side-card" id="specialistWidget">
+                        <h3><i class="bi bi-hospital" style="color:#0ea5e9;"></i> Specialist &amp; Room</h3>
+                        <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
+                            @if (Model?.Doctor != null && !string.IsNullOrEmpty(Model.Doctor.ImagePath))
+                            {
+                                <div id="specialistAvatar" style="width:42px; height:42px; border-radius:12px; overflow:hidden;">
+                                    <img src="@(Model.Doctor.ImagePath.Replace("\\", "/"))" alt="@Model.Doctor.Name" style="width:100%;height:100%;object-fit:cover;" />
+                                </div>
+                            }
+                            else
+                            {
+                                <div id="specialistAvatar" style="width:42px; height:42px; border-radius:12px; overflow:hidden;">
+                                    <img src="~/images/user_default.jpg" alt="@(Model?.Doctor?.Name ?? "Doctor")" style="width:100%;height:100%;object-fit:cover;" />
+                                </div>
+                            }
+                            <div>
+                                <strong id="specialistCardName" style="font-size:13px; color:#0f172a; display:block;">@(Model?.Doctor?.Name ?? "Doctor")</strong>
+                                <span id="specialistCardSpec" style="font-size:11px; color:#64748b;">@(Model?.Doctor?.Specialization ?? "General") Department</span>
+                            </div>
+                        </div>
+                        <div style="font-size:12px; color:#475569; border-top:1px solid #f1f5f9; padding-top:10px; display:flex; flex-direction:column; gap:6px;">
+                            <div><i class="bi bi-geo-alt" style="color:#94a3b8; margin-right:4px;"></i> Consultation Clinic Room</div>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // ── Status picker ────────────────────────────────────
+    function setStatus(val, el) {
+        document.querySelectorAll('.status-option').forEach(o => o.classList.remove('selected'));
+        el.classList.add('selected');
+        document.getElementById('hiddenStatus').value = val;
+    }
+
+    function updateGuestPatientName(val) {
+        const name = val.trim() || 'Walk-in Patient';
+        document.getElementById('summaryPatient').textContent = name;
+        document.getElementById('patientBannerName').textContent = name;
+    }
+
+    // ── Cascading Dropdown: Department -> Doctor ──────────
+    function onDepartmentChange(specialization) {
+        const doctorSelect = document.getElementById('doctorSelect');
+        doctorSelect.innerHTML = '<option value="">Loading doctors...</option>';
+        doctorSelect.disabled = true;
+
+        document.getElementById('summaryDepartment').textContent = specialization || 'Not selected';
+
+        if (!specialization) {
+            doctorSelect.innerHTML = '<option value="">-- First Select Specialization --</option>';
+            doctorSelect.disabled = false;
+            return;
+        }
+
+        fetch(`/Appointments/GetDoctorsBySpecialization?specialization=${encodeURIComponent(specialization)}`)
+            .then(r => r.json())
+            .then(doctors => {
+                doctorSelect.disabled = false;
+                if (doctors.length === 0) {
+                    doctorSelect.innerHTML = '<option value="">No doctors in this department</option>';
+                } else {
+                    let html = '<option value="">-- Select Doctor --</option>';
+                    doctors.forEach(d => {
+                        html += `<option value="${d.id}" data-fee="${d.consultationFee}" data-spec="${d.specialization}">${d.name} (${d.consultationFee} EGP)</option>`;
+                    });
+                    doctorSelect.innerHTML = html;
+                }
+            })
+            .catch(() => {
+                doctorSelect.disabled = false;
+                doctorSelect.innerHTML = '<option value="">Error loading doctors</option>';
+            });
+    }
+
+    function onDoctorChange(selectEl) {
+        const docId = selectEl.value;
+        const selectedOption = selectEl.options[selectEl.selectedIndex];
+
+        if (docId && selectedOption && selectedOption.value !== "") {
+            const fullText = selectedOption.text;
+            const docName = fullText.includes(' (') ? fullText.substring(0, fullText.indexOf(' (')) : fullText;
+            const fee = selectedOption.getAttribute('data-fee');
+            const spec = selectedOption.getAttribute('data-spec');
+
+            // Update summary
+            document.getElementById('summaryDoctor').textContent = docName;
+            document.getElementById('summaryFee').textContent = fee ? fee + ' EGP' : '-';
+
+            // Update specialist card
+            document.getElementById('specialistCardName').textContent = docName;
+            document.getElementById('specialistCardSpec').textContent = (spec || 'General') + ' Department';
+
+            const cleanName = docName.replace(/^Dr\.\s*/i, '').trim();
+            const initials = cleanName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() || 'DR';
+            document.getElementById('specialistAvatar').textContent = initials;
+            document.getElementById('specialistWidget').style.display = 'block';
+        }
+    }
+
+    function updateSummaryDateTime(val) {
+        if (!val) {
+            document.getElementById('summaryDate').textContent = 'Not set';
+            document.getElementById('summaryTime').textContent = 'Not set';
+            return;
+        }
+        const d = new Date(val);
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const month = months[d.getMonth()];
+        const day = d.getDate();
+        const year = d.getFullYear();
+        document.getElementById('summaryDate').textContent = `${month} ${day}, ${year}`;
+
+        let hours = d.getHours();
+        const minutes = d.getMinutes().toString().padStart(2, '0');
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12;
+        hours = hours ? hours : 12;
+        const strHours = hours.toString().padStart(2, '0');
+        document.getElementById('summaryTime').textContent = `${strHours}:${minutes} ${ampm}`;
+    }
+</script>
+</body>
+</html>

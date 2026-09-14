@@ -1,0 +1,43 @@
+@page
+@model ResendEmailConfirmationModel
+@{
+    ViewData["Title"] = "Resend email confirmation";
+}
+
+<div class="auth-page">
+    <div class="auth-topbar">
+        <a class="auth-brand" asp-area="" asp-controller="Home" asp-action="Index"><span class="brand-mark"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h4l2-5 3 10 2-5h7" /></svg></span> Reaya</a>
+        <a class="back-home" asp-area="" asp-controller="Home" asp-action="Index">Back to home</a>
+    </div>
+    <div class="auth-grid support-grid">
+        <section class="auth-card">
+            <div class="secure-pill"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2" /><path d="m4 7 8 6 8-6" /></svg> Email verification</div>
+            <h1>Resend confirmation email</h1>
+            <p class="auth-lead">Enter your email and we'll send a fresh confirmation link to verify your Reaya account.</p>
+            <form method="post">
+                <div asp-validation-summary="All" class="validation-message" role="alert"></div>
+                <div class="auth-field">
+                    <label asp-for="Input.Email">Email address</label>
+                    <div class="field-input"><span class="field-icon"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2" /><path d="m4 7 8 6 8-6" /></svg></span><input asp-for="Input.Email" autocomplete="email" aria-required="true" placeholder="you@example.com" /></div>
+                    <span asp-validation-for="Input.Email" class="validation-message"></span>
+                </div>
+                <button type="submit" class="auth-submit">Send Confirmation <span><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13m-6-6 6 6-6 6" /></svg></span></button>
+            </form>
+            <p class="auth-switch"><a asp-page="./Login">← Back to sign in</a></p>
+        </section>
+        <aside class="auth-story support-story">
+            <p class="eyebrow">ONE QUICK STEP</p>
+            <h2>Confirm once, care with confidence</h2>
+            <p>Email confirmation keeps your account details safe and makes sure we can reach you about your appointments.</p>
+            <div class="benefit-list">
+                <div><span><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2" /><path d="m4 7 8 6 8-6" /></svg></span><strong>Open your email<small>Check your inbox and spam folder for the message.</small></strong></div>
+                <div><span><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 5 6v5c0 4.5 3 8.2 7 10 4-1.8 7-5.5 7-10V6l-7-3Z" /><path d="m9 12 2 2 4-4" /></svg></span><strong>Tap confirm<small>One click verifies your account securely.</small></strong></div>
+                <div><span><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg></span><strong>Book with Reaya<small>Return to your account when you're ready.</small></strong></div>
+            </div>
+        </aside>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

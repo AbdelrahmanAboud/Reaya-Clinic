@@ -1,0 +1,382 @@
+@model Appointment
+@{
+    ViewData["Title"] = "Book New Appointment – Rayaah Clinic";
+    var specializations = ViewBag.Specializations as List<string>;
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="~/css/dashboard.css" />
+</head>
+<body>
+<div class="shell">
+
+    <!-- Sidebar -->
+    @Html.Partial("_Sidebar")
+
+    <!-- Main -->
+    <div class="main">
+      <header class="topbar">
+        <a href="/PatientPortal/MyAppointments" class="topbar-back-link">
+            <i class="bi bi-arrow-left"></i> Back to my appointments
+        </a>
+      </header>
+
+        <div class="content">
+
+            <!-- Booking Hero Section -->
+            <div class="booking-hero-card">
+                <div class="booking-hero-icon">
+                    <i class="bi bi-calendar-plus"></i>
+                </div>
+                <div>
+                    <h1 class="booking-hero-title">Book New Appointment</h1>
+                    <p class="booking-hero-sub">Schedule a consultation with our specialized medical experts</p>
+                </div>
+            </div>
+
+            <!-- Booking Form Card -->
+            <div class="booking-card">
+                <div class="booking-card-header">
+                    <h2><i class="bi bi-clipboard2-pulse me-2 text-primary"></i>Appointment Details</h2>
+                    <p>Please select your preferred specialization, doctor, and time slot</p>
+                </div>
+                
+                <form asp-controller="PatientPortal" asp-action="SaveAppointment" method="post" class="booking-form">
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+                    
+                    <div class="form-grid">
+                        <!-- Specialization -->
+                        <div class="form-group">
+                            <label>Specialization</label>
+                            <div class="input-with-icon">
+                                <i class="bi bi-briefcase"></i>
+                                <select id="specializationSelect" name="Specialization" required>
+                                    <option value="">Select specialization</option>
+                                    @if (specializations != null)
+                                    {
+                                        @foreach (var spec in specializations)
+                                        {
+                                            <option value="@spec">@spec</option>
+                                        }
+                                    }
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <!-- Doctor -->
+                        <div class="form-group">
+                            <label>Doctor</label>
+                            <div class="input-with-icon">
+                                <i class="bi bi-person-badge"></i>
+                                <select id="doctorSelect" name="DoctorId" required disabled>
+                                    <option value="">Select specialization first</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-grid">
+                        <!-- Date -->
+                        <div class="form-group">
+                            <label>Date</label>
+                            <div class="input-with-icon">
+                                <i class="bi bi-calendar-event"></i>
+                                <input type="date" name="AppointmentDate" required min="@DateTime.Now.ToString("yyyy-MM-dd")" />
+                            </div>
+                        </div>
+                        
+                        <!-- Time -->
+                        <div class="form-group">
+                            <label>Time</label>
+                            <div class="input-with-icon">
+                                <i class="bi bi-clock"></i>
+                                <input type="time" name="AppointmentTime" required />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Notes / Reason for visit -->
+                    <div class="form-group full-width">
+                        <label>Reason for visit</label>
+                        <div class="textarea-with-icon">
+                            <i class="bi bi-chat-left-text"></i>
+                            <textarea name="Notes" rows="4" placeholder="Briefly describe your symptoms or reason for consultation..."></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="form-actions">
+                        <a href="/PatientPortal/MyAppointments" class="btn-cancel">
+                            Cancel
+                        </a>
+                        <button type="submit" class="btn-save">
+                            <i class="bi bi-calendar-check-fill"></i> Confirm & Book Appointment
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+<!-- Custom Professional Styles -->
+<style>
+    .topbar-back-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        color: #475569;
+        font-size: 13px;
+        font-weight: 600;
+        text-decoration: none;
+        padding: 8px 12px;
+        border-radius: 8px;
+        transition: all 0.2s;
+    }
+    .topbar-back-link:hover {
+        background: #f1f5f9;
+        color: #0f172a;
+    }
+
+    .booking-hero-card {
+        background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+        border-radius: 16px;
+        padding: 24px 30px;
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        color: white;
+        margin-bottom: 24px;
+        box-shadow: 0 4px 15px rgba(2, 132, 199, 0.2);
+    }
+    .booking-hero-icon {
+        width: 60px;
+        height: 60px;
+        min-width: 60px;
+        min-height: 60px;
+        border-radius: 14px;
+        background: rgba(255, 255, 255, 0.15);
+        backdrop-filter: blur(5px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 26px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+    .booking-hero-title {
+        font-size: 22px;
+        font-weight: 700;
+        margin: 0 0 4px 0;
+        color: white;
+    }
+    .booking-hero-sub {
+        font-size: 14px;
+        opacity: 0.9;
+        margin: 0;
+    }
+
+    .booking-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+        overflow: hidden;
+    }
+    .booking-card-header {
+        padding: 24px;
+        border-bottom: 1px solid #f1f5f9;
+        background: #f8fafc;
+    }
+    .booking-card-header h2 {
+        font-size: 16px;
+        font-weight: 700;
+        color: #0f172a;
+        margin: 0 0 4px 0;
+        display: flex;
+        align-items: center;
+    }
+    .booking-card-header p {
+        font-size: 13px;
+        color: #64748b;
+        margin: 0;
+    }
+
+    .booking-form {
+        padding: 24px;
+    }
+    .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        margin-bottom: 20px;
+    }
+    .form-group {
+        display: flex;
+        flex-direction: column;
+    }
+    .form-group.full-width {
+        grid-column: span 2;
+        margin-bottom: 24px;
+    }
+    .form-group label {
+        color: #475569;
+        font-size: 13px;
+        font-weight: 600;
+        margin-bottom: 8px;
+    }
+
+    /* Icon Input Wrapper Styles */
+    .input-with-icon, .textarea-with-icon {
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+    .input-with-icon i, .textarea-with-icon i {
+        position: absolute;
+        left: 14px;
+        color: #94a3b8;
+        font-size: 15px;
+        z-index: 2;
+        pointer-events: none;
+    }
+    .input-with-icon input, 
+    .input-with-icon select {
+        width: 100%;
+        padding: 12px 14px 12px 42px;
+        border: 1px solid #cbd5e1;
+        border-radius: 10px;
+        font-size: 14px;
+        color: #0f172a;
+        background: #fff;
+        outline: none;
+        transition: all 0.2s;
+    }
+    .textarea-with-icon textarea {
+        width: 100%;
+        padding: 12px 14px 12px 42px;
+        border: 1px solid #cbd5e1;
+        border-radius: 10px;
+        font-size: 14px;
+        color: #0f172a;
+        background: #fff;
+        outline: none;
+        resize: vertical;
+        transition: all 0.2s;
+    }
+    .input-with-icon input:focus, 
+    .input-with-icon select:focus,
+    .textarea-with-icon textarea:focus {
+        border-color: #0284c7;
+        box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
+    }
+    .input-with-icon select:disabled {
+        background-color: #f8fafc;
+        color: #94a3b8;
+        cursor: not-allowed;
+    }
+
+    /* Actions */
+    .form-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+        padding-top: 20px;
+        border-top: 1px solid #f1f5f9;
+    }
+    .btn-cancel {
+        height: 44px;
+        padding: 0 24px;
+        border-radius: 10px;
+        border: 1px solid #cbd5e1;
+        background: #f8fafc;
+        color: #475569;
+        font-size: 14px;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+    }
+    .btn-cancel:hover {
+        background: #f1f5f9;
+        color: #0f172a;
+    }
+    .btn-save {
+        height: 44px;
+        padding: 0 28px;
+        border-radius: 10px;
+        border: none;
+        background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+        color: white;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        box-shadow: 0 4px 12px rgba(2, 132, 199, 0.25);
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.2s;
+    }
+    .btn-save:hover {
+        opacity: 0.95;
+        transform: translateY(-1px);
+    }
+
+    /* Responsive */
+    @@media (max-width: 768px) {
+        .form-grid {
+            grid-template-columns: 1fr;
+        }
+        .form-group.full-width {
+            grid-column: span 1;
+        }
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const specializationSelect = document.getElementById('specializationSelect');
+        const doctorSelect = document.getElementById('doctorSelect');
+
+        specializationSelect.addEventListener('change', function() {
+            const specialization = this.value;
+            
+            if (specialization) {
+                doctorSelect.innerHTML = '<option value="">Loading doctors...</option>';
+                doctorSelect.disabled = true;
+
+                fetch(`/PatientPortal/GetDoctorsBySpecialization?specialization=${encodeURIComponent(specialization)}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        doctorSelect.innerHTML = '<option value="">Select doctor</option>';
+                        if (data && data.length > 0) {
+                            data.forEach(doctor => {
+                                doctorSelect.innerHTML += `<option value="${doctor.id}">Dr. ${doctor.name} - ${doctor.consultationFee} EGP</option>`;
+                            });
+                            doctorSelect.disabled = false;
+                        } else {
+                            doctorSelect.innerHTML = '<option value="">No doctors available</option>';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        doctorSelect.innerHTML = '<option value="">Error loading doctors</option>';
+                    });
+            } else {
+                doctorSelect.innerHTML = '<option value="">Select specialization first</option>';
+                doctorSelect.disabled = true;
+            }
+        });
+    });
+</script>
+</body>
+</html>

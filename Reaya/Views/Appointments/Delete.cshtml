@@ -1,0 +1,209 @@
+@model Appointment
+@{
+    Layout = null;
+    bool isWalkin = Model?.PatientId == null;
+    string patientDisplayName = isWalkin ? (Model?.GuestPatientName ?? "Walk-in Patient") : (Model?.Patient?.Name ?? "Registered Patient");
+    string patientDisplayPhone = isWalkin ? (Model?.GuestPatientPhone ?? "-") : (Model?.Patient?.PhoneNo ?? "-");
+    string patientInitials = !string.IsNullOrWhiteSpace(patientDisplayName)
+        ? (patientDisplayName.Length >= 2 ? patientDisplayName.Substring(0, 2).ToUpper() : patientDisplayName.ToUpper())
+        : "PT";
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Delete Appointment #@Model?.Id – Rayaah Clinic</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="~/css/dashboard.css" />
+    <style>
+        .delete-wrapper {
+            max-width: 760px;
+            margin: 0 auto;
+        }
+        .danger-banner {
+            background: #fff1f2;
+            border: 1.5px solid #fecdd3;
+            border-radius: 18px;
+            padding: 20px 24px;
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            margin-bottom: 24px;
+        }
+        .danger-icon {
+            width: 52px;
+            height: 52px;
+            border-radius: 14px;
+            background: #fee2e2;
+            color: #e11d48;
+            display: grid;
+            place-items: center;
+            font-size: 24px;
+            flex-shrink: 0;
+        }
+        .delete-card {
+            background: #fff;
+            border: 1px solid #e8edf3;
+            border-radius: 20px;
+            padding: 28px;
+            box-shadow: 0 4px 16px rgba(15,23,42,0.05);
+            margin-bottom: 24px;
+        }
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 0;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 13px;
+        }
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+        .detail-row label {
+            color: #64748b;
+            font-weight: 600;
+        }
+        .detail-row strong {
+            color: #0f172a;
+        }
+        .btn-danger-confirm {
+            height: 46px;
+            padding: 0 28px;
+            border-radius: 12px;
+            background: #e11d48;
+            color: #fff;
+            border: none;
+            font-size: 14px;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 14px rgba(225, 29, 72, 0.25);
+        }
+        .btn-danger-confirm:hover {
+            background: #be123c;
+            transform: translateY(-1px);
+        }
+    </style>
+</head>
+<body>
+<div class="shell">
+
+    <!-- Sidebar -->
+    @Html.Partial("_Sidebar")
+
+    <!-- Main Content -->
+    <div class="main">
+        <!-- Topbar -->
+        <header class="topbar">
+            <div class="search-bar">
+                <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 5 5"/></svg>
+                <input type="search" placeholder="Search patients, doctors, appointments..." />
+            </div>
+            
+        </header>
+
+        <!-- Content Body -->
+        <div class="content">
+            <div class="delete-wrapper">
+
+                <!-- Navigation Back Button -->
+                <div style="margin-bottom: 12px;">
+                    <a asp-controller="Appointments" asp-action="Index" style="text-decoration:none; font-size:13px; font-weight:700; color:#0284c7; display:inline-flex; align-items:center; gap:6px;">
+                        <i class="bi bi-arrow-left"></i> Back to Appointments
+                    </a>
+                </div>
+
+                <!-- Danger Warning Banner -->
+                <div class="danger-banner">
+                    <div class="danger-icon">
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                    </div>
+                    <div>
+                        <h2 style="font-size:16px; font-weight:800; color:#9f1239; margin:0 0 4px 0;">Delete Appointment Confirmation</h2>
+                        <p style="font-size:13px; color:#be123c; margin:0; line-height:1.5;">
+                            Are you sure you want to permanently cancel and delete this appointment booking? This action cannot be undone.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Appointment Details Card -->
+                <div class="delete-card">
+                    <!-- Header with Ref and Badge -->
+                    <div style="display:flex; justify-content:space-between; align-items:center; padding-bottom:18px; margin-bottom:12px; border-bottom:1.5px solid #f1f5f9;">
+                        <div>
+                            <span style="font-size:11px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:0.5px;">Booking ID</span>
+                            <h3 style="font-size:18px; font-weight:800; color:#0f172a; margin:0;">Appointment #A-@Model?.Id</h3>
+                        </div>
+                        <span class="badge-status @(Model?.Status == AppointmentStatus.Confirmed ? "s-confirmed" : (Model?.Status == AppointmentStatus.Pending ? "s-pending" : (Model?.Status == AppointmentStatus.Completed ? "s-completed" : "s-cancelled")))">
+                            @Model?.Status.ToString()
+                        </span>
+                    </div>
+
+                    <!-- Details Rows -->
+                    <div class="detail-row">
+                        <label><i class="bi bi-person-fill" style="margin-right:6px; color:#0ea5e9;"></i> Patient</label>
+                        <div style="text-align:right;">
+                            <strong>@patientDisplayName</strong>
+                            <span style="display:block; font-size:11px; color:#64748b;">@patientDisplayPhone • @(isWalkin ? "Walk-in" : "Registered")</span>
+                        </div>
+                    </div>
+
+                    <div class="detail-row">
+                        <label><i class="bi bi-heart-pulse-fill" style="margin-right:6px; color:#0ea5e9;"></i> Attending Doctor</label>
+                        <div style="text-align:right;">
+                            <strong>Dr. @(Model?.Doctor?.Name ?? "Not Assigned")</strong>
+                            <span style="display:block; font-size:11px; color:#0284c7; font-weight:600;">@(Model?.Doctor?.Specialization ?? "-") Department</span>
+                        </div>
+                    </div>
+
+                    <div class="detail-row">
+                        <label><i class="bi bi-calendar3" style="margin-right:6px; color:#0ea5e9;"></i> Scheduled Date</label>
+                        <strong>@Model?.AppointmentDate.ToString("MMM d, yyyy", System.Globalization.CultureInfo.InvariantCulture)</strong>
+                    </div>
+
+                    <div class="detail-row">
+                        <label><i class="bi bi-clock" style="margin-right:6px; color:#0ea5e9;"></i> Scheduled Time</label>
+                        <strong style="color:#0284c7;">@Model?.AppointmentDate.ToString("hh:mm tt", System.Globalization.CultureInfo.InvariantCulture)</strong>
+                    </div>
+
+                    <div class="detail-row">
+                        <label><i class="bi bi-cash-stack" style="margin-right:6px; color:#16a34a;"></i> Consultation Fee</label>
+                        <strong style="color:#15803d; font-size:15px;">@(Model?.Doctor != null ? Model.Doctor.ConsultationFee + " EGP" : "-")</strong>
+                    </div>
+
+                    @if (!string.IsNullOrWhiteSpace(Model?.Notes))
+                    {
+                        <div class="detail-row" style="align-items:flex-start;">
+                            <label><i class="bi bi-file-text" style="margin-right:6px; color:#64748b;"></i> Medical Notes</label>
+                            <span style="max-width:320px; text-align:right; font-size:12px; color:#475569; line-height:1.4;">@Model.Notes</span>
+                        </div>
+                    }
+
+                    <!-- Confirmation Form & Actions -->
+                    <form asp-controller="Appointments" asp-action="CurrentDelete" method="post" style="margin-top:24px; padding-top:20px; border-top:1.5px solid #f1f5f9; display:flex; justify-content:flex-end; gap:12px;">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@Model?.Id" />
+
+                        <a asp-controller="Appointments" asp-action="Index" style="text-decoration:none; display:inline-flex; align-items:center; justify-content:center; height:46px; padding:0 24px; border-radius:12px; border:1.5px solid #e2e8f0; background:#fff; font-size:14px; font-weight:700; color:#64748b;">
+                            Cancel &amp; Go Back
+                        </a>
+                        <button type="submit" class="btn-danger-confirm">
+                            <i class="bi bi-trash3-fill"></i> Confirm &amp; Delete Appointment
+                        </button>
+                    </form>
+
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+</div>
+</body>
+</html>

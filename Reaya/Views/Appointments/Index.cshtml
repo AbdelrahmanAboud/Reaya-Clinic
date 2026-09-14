@@ -1,0 +1,315 @@
+@model List<Appointment>
+@{
+    Layout = "_DashboardLayout";
+    ViewData["Title"] = "Appointments";
+    string searchQuery = Context.Request.Query["search"];
+    string sortBy = Context.Request.Query["sortBy"];
+    string sortOrder = Context.Request.Query["sortOrder"];
+
+    // Helper function to generate sort URL
+    string GetSortUrl(string column, string direction = null)
+    {
+        string newSortOrder = direction ?? "asc";
+        if (string.IsNullOrEmpty(direction))
+        {
+            if (sortBy == column && sortOrder == "asc")
+            {
+                newSortOrder = "desc";
+            }
+        }
+        return $"?search={searchQuery}&sortBy={column}&sortOrder={newSortOrder}";
+    }
+
+    // Helper to get sort icon class for arrows
+    string GetArrowClass(string column, string direction)
+    {
+        if (sortBy == column && sortOrder == direction)
+        {
+            return "active";
+        }
+        return "";
+    }
+
+    // Helper to check if column is active
+    bool IsColumnActive(string column)
+    {
+        return sortBy == column;
+    }
+}
+
+@section TopBar {
+<form method="get" asp-action="Index" style="flex-grow: 1; display: flex;">
+    <input type="hidden" name="sortBy" value="@sortBy" />
+    <input type="hidden" name="sortOrder" value="@sortOrder" />
+    <div class="search-bar" style="width: 100%;">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 5 5"/></svg>
+        <input type="search" name="search" value="@Context.Request.Query["search"]" placeholder="Search patients, doctors, status..." style="width: 100%; border: none; outline: none; background: transparent;" onchange="this.form.submit()" />
+    </div>
+</form>
+}
+
+<style>
+.sortable-header {
+    position: relative;
+    transition: all 0.2s ease;
+}
+
+.sortable-header:hover {
+    color: #0284c7 !important;
+    background: #f0f9ff !important;
+}
+
+.sortable-header.active-sort {
+    color: #0284c7 !important;
+    background: #f0f9ff !important;
+}
+
+.sort-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #f8fafc;
+    color: #64748b;
+    padding: 10px 14px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    border: 2px solid #e2e8f0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.sort-badge.active {
+    background: #0284c7;
+    color: white;
+    box-shadow: 0 4px 12px rgba(2, 132, 199, 0.25);
+    border: 2px solid #0284c7;
+}
+
+.sort-arrows {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    cursor: pointer;
+    padding: 2px;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.sort-arrows:hover {
+    background: rgba(2, 132, 199, 0.1);
+}
+
+.sort-arrow {
+    font-size: 14px;
+    color: #cbd5e1;
+    transition: all 0.2s ease;
+    line-height: 1;
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.sort-arrow:hover {
+    color: #0284c7;
+    transform: scale(1.1);
+}
+
+.sort-arrow.active {
+    color: #0284c7;
+    font-weight: bold;
+    transform: scale(1.15);
+}
+
+.sort-badge.active .sort-arrow.active {
+    color: white;
+}
+
+.sort-badge.active .sort-arrow:not(.active) {
+    color: rgba(255, 255, 255, 0.4);
+}
+</style>
+
+<div class="content">
+            <!-- Header section with Title & Action button -->
+            <div class="page-header">
+                <div class="page-title">
+                    <h1>Appointments Tracker</h1>
+                    <p>Track, filter, and manage all clinic visits and patient bookings</p>
+                </div>
+                <a class="new-apt-btn" href="/Appointments/Create">
+                    <i class="bi bi-plus-lg"></i> Book New Appointment
+                </a>
+            </div>
+
+            <!-- Stats Grid -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div>
+                        <label>Total Appointments</label>
+                        <div class="value">@ViewBag.TotalAppointments</div>
+                        <div class="sub blue"><i class="bi bi-arrow-up-short"></i> +5 today</div>
+                    </div>
+                    <div class="stat-icon si-blue"><i class="bi bi-calendar-event"></i></div>
+                </div>
+                <div class="stat-card">
+                    <div>
+                        <label>Confirmed</label>
+                        <div class="value">@ViewBag.ConfirmedAppointments</div>
+                        <div class="sub green"><i class="bi bi-check-circle"></i> Ready for visit</div>
+                    </div>
+                    <div class="stat-icon si-teal"><i class="bi bi-calendar-check"></i></div>
+                </div>
+                <div class="stat-card">
+                    <div>
+                        <label>Pending</label>
+                        <div class="value">@ViewBag.PendingAppointments</div>
+                        <div class="sub amber"><i class="bi bi-clock-history"></i> Awaiting confirmation</div>
+                    </div>
+                    <div class="stat-icon si-violet"><i class="bi bi-hourglass-split"></i></div>
+                </div>
+                <div class="stat-card">
+                    <div>
+                        <label>Completed Today</label>
+                        <div class="value">@ViewBag.CompletedAppointments</div>
+                        <div class="sub blue"><i class="bi bi-person-check"></i> Finished visits</div>
+                    </div>
+                    <div class="stat-icon si-slate"><i class="bi bi-check2-all"></i></div>
+                </div>
+            </div>
+
+            <!-- Full Width Appointment Tracker Table -->
+            <div class="tracker-card" style="margin-top: 10px;">
+                <div class="tracker-header">
+                    <div>
+                        <h2>All Appointments</h2>
+                        <p style="font-size:12px; color:#64748b; margin-top:2px;">Showing all scheduled patient appointments for today and upcoming dates</p>
+                    </div>
+                  
+                </div>
+                <table>
+                    <thead>
+                        <tr style="background:#f8fafc;border-bottom:2px solid #f1f5f9;">
+                            <th class="sortable-header @(IsColumnActive("patient")?"active-sort":"")" style="padding:16px 24px;text-align:left;font-size:12px;font-weight:700;color:#94a3b8;letter-spacing:0.8px;text-transform:uppercase;cursor:pointer;user-select:none;">
+                                <div style="display:flex;align-items:center;gap:8px;">
+                                    Patient Name
+                                    <span class="sort-badge @(IsColumnActive("patient")?"active":"")">
+                                        <div class="sort-arrows">
+                                            <i class="bi bi-caret-up sort-arrow @GetArrowClass("patient", "asc")" onclick="event.stopPropagation(); window.location.href='@GetSortUrl("patient", "asc")'"></i>
+                                            <i class="bi bi-caret-down sort-arrow @GetArrowClass("patient", "desc")" onclick="event.stopPropagation(); window.location.href='@GetSortUrl("patient", "desc")'"></i>
+                                        </div>
+                                    </span>
+                                </div>
+                            </th>
+                            <th class="sortable-header @(IsColumnActive("doctor")?"active-sort":"")" style="padding:16px 24px;text-align:left;font-size:12px;font-weight:700;color:#94a3b8;letter-spacing:0.8px;text-transform:uppercase;cursor:pointer;user-select:none;">
+                                <div style="display:flex;align-items:center;gap:8px;">
+                                    Doctor & Specialization
+                                    <span class="sort-badge @(IsColumnActive("doctor")?"active":"")">
+                                        <div class="sort-arrows">
+                                            <i class="bi bi-caret-up sort-arrow @GetArrowClass("doctor", "asc")" onclick="event.stopPropagation(); window.location.href='@GetSortUrl("doctor", "asc")'"></i>
+                                            <i class="bi bi-caret-down sort-arrow @GetArrowClass("doctor", "desc")" onclick="event.stopPropagation(); window.location.href='@GetSortUrl("doctor", "desc")'"></i>
+                                        </div>
+                                    </span>
+                                </div>
+                            </th>
+                            <th class="sortable-header @(IsColumnActive("date")?"active-sort":"")" style="padding:16px 24px;text-align:left;font-size:12px;font-weight:700;color:#94a3b8;letter-spacing:0.8px;text-transform:uppercase;cursor:pointer;user-select:none;">
+                                <div style="display:flex;align-items:center;gap:8px;">
+                                    Date & Time
+                                    <span class="sort-badge @(IsColumnActive("date")?"active":"")">
+                                        <div class="sort-arrows">
+                                            <i class="bi bi-caret-up sort-arrow @GetArrowClass("date", "asc")" onclick="event.stopPropagation(); window.location.href='@GetSortUrl("date", "asc")'"></i>
+                                            <i class="bi bi-caret-down sort-arrow @GetArrowClass("date", "desc")" onclick="event.stopPropagation(); window.location.href='@GetSortUrl("date", "desc")'"></i>
+                                        </div>
+                                    </span>
+                                </div>
+                            </th>
+                            <th class="sortable-header @(IsColumnActive("status")?"active-sort":"")" style="padding:16px 24px;text-align:left;font-size:12px;font-weight:700;color:#94a3b8;letter-spacing:0.8px;text-transform:uppercase;cursor:pointer;user-select:none;">
+                                <div style="display:flex;align-items:center;gap:8px;">
+                                    Status
+                                    <span class="sort-badge @(IsColumnActive("status")?"active":"")">
+                                        <div class="sort-arrows">
+                                            <i class="bi bi-caret-up sort-arrow @GetArrowClass("status", "asc")" onclick="event.stopPropagation(); window.location.href='@GetSortUrl("status", "asc")'"></i>
+                                            <i class="bi bi-caret-down sort-arrow @GetArrowClass("status", "desc")" onclick="event.stopPropagation(); window.location.href='@GetSortUrl("status", "desc")'"></i>
+                                        </div>
+                                    </span>
+                                </div>
+                            </th>
+                            <th style="padding:16px 24px;text-align:center;font-size:12px;font-weight:700;color:#94a3b8;letter-spacing:0.8px;text-transform:uppercase;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>                        @foreach(var appointment in Model){
+                        <tr>
+                            <td>
+                                <div class="td-patient">
+                                    @if(appointment.Patient != null)
+                                    {
+                                        @appointment.Patient.Name
+                                    }
+                                    else
+                                    {
+                                        @(appointment.GuestPatientName ?? "Walk-in Patient")
+                                    }
+                                </div>
+                                <span style="font-size:11px; color:#94a3b8;">
+                                    @if(appointment.Patient != null)
+                                    {
+                                        @appointment.Patient.PhoneNo
+                                    }
+                                    else
+                                    {
+                                        @appointment.GuestPatientPhone
+                                    }
+                                </span>
+                            </td>
+                            <td>
+                                <div class="td-doctor-name">
+                                    <span>Dr. </span>@(appointment.Doctor?.Name ?? "N/A")
+                                </div>
+                                <div class="td-doctor-dept">@(appointment.Doctor?.Specialization ?? "-")</div>
+                            </td>
+                            <td class="td-date">
+                                <div class="dt-row">
+                                    <i class="bi bi-calendar3"></i>
+                                    @appointment.AppointmentDate.ToString("MMM d, yyyy", System.Globalization.CultureInfo.InvariantCulture)
+                                </div>
+                                <div class="dt-row"><i class="bi bi-clock"></i> @appointment.AppointmentDate.ToString("hh:mm tt", System.Globalization.CultureInfo.InvariantCulture)</div>
+                            </td>
+                            <td>
+                                <span class="badge-status @(appointment.Status == AppointmentStatus.Confirmed ? "s-confirmed" : (appointment.Status == AppointmentStatus.Pending ? "s-pending" : (appointment.Status == AppointmentStatus.Completed ? "s-completed" : "s-cancelled")))">
+                                    @appointment.Status.ToString()
+                                </span>
+                            </td>
+                            <td>
+                                <div style="display:flex; justify-content:center; gap:8px;">
+                                    <a asp-controller="Appointments" asp-action="Details" asp-route-id="@appointment.Id" class="reschedule-btn" style="text-decoration:none;">
+                                        <i class="bi bi-eye" style="margin-right:4px;"></i> Details
+                                    </a>
+                                    <a asp-controller="Appointments" asp-action="Edit" asp-route-id="@appointment.Id" class="reschedule-btn" style="text-decoration:none; background:#f0f9ff; border-color:#bae6fd; color:#0369a1;">
+                                        <i class="bi bi-pencil-square" style="margin-right:4px;"></i> Edit
+                                    </a>
+                                    <a asp-controller="Appointments" asp-action="Delete" asp-route-id="@appointment.Id" class="reschedule-btn" style="text-decoration:none; background:#fff1f2; border-color:#fecdd3; color:#e11d48;">
+                                        <i class="bi bi-trash3" style="margin-right:4px;"></i> Delete
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+        }
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+
+@section Scripts {
+<script>
+    // Status filter tabs JS interaction demo
+    document.querySelectorAll('.sf-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.sf-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+        });
+    });
+</script>
+}

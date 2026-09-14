@@ -1,0 +1,324 @@
+@model List<Appointment>
+@{
+    Layout = "_DashboardLayout";
+    ViewData["Title"] = "Overview";
+    string searchQuery = Context.Request.Query["search"];
+    string sortBy = Context.Request.Query["sortBy"];
+    string sortOrder = Context.Request.Query["sortOrder"];
+
+    // Helper function to generate sort URL
+    string GetSortUrl(string column, string direction = null)
+    {
+        string newSortOrder = direction ?? "asc";
+        if (string.IsNullOrEmpty(direction))
+        {
+            if (sortBy == column && sortOrder == "asc")
+            {
+                newSortOrder = "desc";
+            }
+        }
+        return $"?search={searchQuery}&sortBy={column}&sortOrder={newSortOrder}";
+    }
+
+    // Helper to get sort icon class for arrows
+    string GetArrowClass(string column, string direction)
+    {
+        if (sortBy == column && sortOrder == direction)
+        {
+            return "active";
+        }
+        return "";
+    }
+
+    // Helper to check if column is active
+    bool IsColumnActive(string column)
+    {
+        return sortBy == column;
+    }
+}
+
+@section TopBar {
+<form method="get" asp-controller="Home" asp-action="Overview" style="flex-grow: 1; display: flex;">
+    <input type="hidden" name="sortBy" value="@sortBy" />
+    <input type="hidden" name="sortOrder" value="@sortOrder" />
+    <div class="search-bar" style="width: 100%;">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 5 5"/></svg>
+        <input type="search" name="search" value="@Context.Request.Query["search"]" placeholder="Search patients, doctors, Status..." style="width: 100%; border: none; outline: none; background: transparent;" onchange="this.form.submit()" />
+    </div>
+</form>
+}
+
+<style>
+.sortable-header {
+    position: relative;
+    transition: all 0.2s ease;
+}
+
+.sortable-header:hover {
+    color: #0284c7 !important;
+    background: #f0f9ff !important;
+}
+
+.sortable-header.active-sort {
+    color: #0284c7 !important;
+    background: #f0f9ff !important;
+}
+
+.sort-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #f8fafc;
+    color: #64748b;
+    padding: 10px 14px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    border: 2px solid #e2e8f0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.sort-badge.active {
+    background: #0284c7;
+    color: white;
+    box-shadow: 0 4px 12px rgba(2, 132, 199, 0.25);
+    border: 2px solid #0284c7;
+}
+
+.sort-arrows {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    cursor: pointer;
+    padding: 2px;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.sort-arrows:hover {
+    background: rgba(2, 132, 199, 0.1);
+}
+
+.sort-arrow {
+    font-size: 14px;
+    color: #cbd5e1;
+    transition: all 0.2s ease;
+    line-height: 1;
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.sort-arrow:hover {
+    color: #0284c7;
+    transform: scale(1.1);
+}
+
+.sort-arrow.active {
+    color: #0284c7;
+    font-weight: bold;
+    transform: scale(1.15);
+}
+
+.sort-badge.active .sort-arrow.active {
+    color: white;
+}
+
+.sort-badge.active .sort-arrow:not(.active) {
+    color: rgba(255, 255, 255, 0.4);
+}
+</style>
+
+<div class="content">
+
+            <!-- Page header -->
+            <div class="page-header">
+                <div>
+                    <h1>Good morning, @ViewData["GreetingName"]</h1>
+                    <p>Sunday, September 5 &nbsp;·&nbsp; 18 appointments scheduled today</p>
+                </div>
+                <a class="new-apt-btn" asp-controller="Appointments" asp-action="Create">+ New appointment</a>
+            </div>
+
+            <!-- Stats -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div>
+                        <label>Total patients</label>
+                        <div class="value">@ViewBag.TotalPatients</div>
+                    </div>
+                    <div class="stat-icon si-teal"><i class="bi bi-people-fill"></i></div>
+                </div>
+                <div class="stat-card">
+                    <div>
+                        <label>Available doctors</label>
+                        <div class="value">@ViewBag.AvailableDoctors</div>
+                    </div>
+                    <div class="stat-icon si-blue"><i class="bi bi-clipboard2-pulse-fill"></i></div>
+                </div>
+                <div class="stat-card">
+                    <div>
+                        <label>Today's appointments</label>
+                        <div class="value">@ViewBag.TodaysAppointments</div>
+                        <div class="sub amber">@ViewBag.PendingAppointments pending</div>
+                    </div>
+                    <div class="stat-icon si-violet"><i class="bi bi-calendar-event-fill"></i></div>
+                </div>
+                <div class="stat-card">
+                    <div>
+                        <label>Specializations</label>
+                        <div class="value">@ViewBag.DepartmentsCount</div>
+                        <div class="sub blue">All staffed</div>
+                    </div>
+                    <div class="stat-icon si-slate"><i class="bi bi-building"></i></div>
+                </div>
+            </div>
+
+            <!-- Bottom row -->
+            <div class="bottom-row">
+
+                <!-- Recent appointments -->
+             <div class="card" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02); margin-top: 20px; overflow: hidden;">
+    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; padding: 20px 24px; border-bottom: 1px solid #f1f5f9;">
+        <h2 style="font-size: 18px; font-weight: 600; color: #0f172a; margin: 0;">Recent appointments</h2>
+        <a class="manage-link" asp-controller="Appointments" asp-action="Index" style="font-size: 14px; font-weight: 500; color: #0284c7; text-decoration: none;">Manage</a>
+    </div>
+    <table style="width: 100%; border-collapse: collapse; text-align: left;">
+        <thead>
+            <tr style="background-color: #ffffff;">
+                <th class="sortable-header @(IsColumnActive("patient")?"active-sort":"")" style="padding: 16px 24px; color: #94a3b8; font-size: 12px; font-weight: 600; letter-spacing: 0.05em; border-bottom: 1px solid #f1f5f9; cursor: pointer; user-select: none;">
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        PATIENT NAME
+                        <span class="sort-badge @(IsColumnActive("patient")?"active":"")">
+                            <div class="sort-arrows">
+                                <i class="bi bi-caret-up sort-arrow @GetArrowClass("patient", "asc")" onclick="event.stopPropagation(); window.location.href='@GetSortUrl("patient", "asc")'"></i>
+                                <i class="bi bi-caret-down sort-arrow @GetArrowClass("patient", "desc")" onclick="event.stopPropagation(); window.location.href='@GetSortUrl("patient", "desc")'"></i>
+                            </div>
+                        </span>
+                    </div>
+                </th>
+                <th class="sortable-header @(IsColumnActive("doctor")?"active-sort":"")" style="padding: 16px 24px; color: #94a3b8; font-size: 12px; font-weight: 600; letter-spacing: 0.05em; border-bottom: 1px solid #f1f5f9; cursor: pointer; user-select: none;">
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        DOCTOR & SPECIALIZATION
+                        <span class="sort-badge @(IsColumnActive("doctor")?"active":"")">
+                            <div class="sort-arrows">
+                                <i class="bi bi-caret-up sort-arrow @GetArrowClass("doctor", "asc")" onclick="event.stopPropagation(); window.location.href='@GetSortUrl("doctor", "asc")'"></i>
+                                <i class="bi bi-caret-down sort-arrow @GetArrowClass("doctor", "desc")" onclick="event.stopPropagation(); window.location.href='@GetSortUrl("doctor", "desc")'"></i>
+                            </div>
+                        </span>
+                    </div>
+                </th>
+                <th class="sortable-header @(IsColumnActive("date")?"active-sort":"")" style="padding: 16px 24px; color: #94a3b8; font-size: 12px; font-weight: 600; letter-spacing: 0.05em; border-bottom: 1px solid #f1f5f9; cursor: pointer; user-select: none;">
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        DATE & TIME
+                        <span class="sort-badge @(IsColumnActive("date")?"active":"")">
+                            <div class="sort-arrows">
+                                <i class="bi bi-caret-up sort-arrow @GetArrowClass("date", "asc")" onclick="event.stopPropagation(); window.location.href='@GetSortUrl("date", "asc")'"></i>
+                                <i class="bi bi-caret-down sort-arrow @GetArrowClass("date", "desc")" onclick="event.stopPropagation(); window.location.href='@GetSortUrl("date", "desc")'"></i>
+                            </div>
+                        </span>
+                    </div>
+                </th>
+                <th class="sortable-header @(IsColumnActive("status")?"active-sort":"")" style="padding: 16px 24px; color: #94a3b8; font-size: 12px; font-weight: 600; letter-spacing: 0.05em; border-bottom: 1px solid #f1f5f9; cursor: pointer; user-select: none;">
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        STATUS
+                        <span class="sort-badge @(IsColumnActive("status")?"active":"")">
+                            <div class="sort-arrows">
+                                <i class="bi bi-caret-up sort-arrow @GetArrowClass("status", "asc")" onclick="event.stopPropagation(); window.location.href='@GetSortUrl("status", "asc")'"></i>
+                                <i class="bi bi-caret-down sort-arrow @GetArrowClass("status", "desc")" onclick="event.stopPropagation(); window.location.href='@GetSortUrl("status", "desc")'"></i>
+                            </div>
+                        </span>
+                    </div>
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+    @if (Model != null && Model.Any())
+    {
+        foreach (var appointment in Model)
+        {
+                <tr style="border-bottom: 1px solid #f8fafc;">
+                    <!-- Patient Name & Phone -->
+                    <td style="padding: 16px 24px; vertical-align: middle;">
+                        <div style="font-weight: 700; color: #0f172a; font-size: 15px;">
+                            @(appointment.Patient != null ? appointment.Patient.Name : (appointment.GuestPatientName ?? "Walk-in Patient"))
+                        </div>
+                        <div style="font-size: 13px; color: #94a3b8; margin-top: 3px; font-weight: 400;">
+                            @if (appointment.PatientId != null)
+                            {
+                                <span>@appointment.Patient?.PhoneNo</span>
+                            }
+                            else
+                            {
+                                <span>@appointment.GuestPatientPhone</span>
+                            }
+                        </div>
+                    </td>
+
+                    <!-- Doctor Name (Blue) & Specialization -->
+                    <td style="padding: 16px 24px; vertical-align: middle;">
+                        <div style="font-weight: 700; color: #0077cc; font-size: 15px;">Dr. @(appointment.Doctor?.Name ?? "Not Assigned")</div>
+                        <div style="font-size: 13px; color: #94a3b8; margin-top: 3px; font-weight: 400;">@(appointment.Doctor?.Specialization ?? "-")</div>
+                    </td>
+
+                    <!-- Date & Time -->
+                    <td style="padding: 16px 24px; vertical-align: middle; font-size: 13px;">
+                        <div style="color: #475569; margin-bottom: 3px;"><i class="bi bi-calendar3" style="color: #94a3b8; margin-right: 4px;"></i> @appointment.AppointmentDate.ToString("MMM d, yyyy", System.Globalization.CultureInfo.InvariantCulture)</div>
+                        <div style="color: #64748b;"><i class="bi bi-clock" style="color: #94a3b8; margin-right: 4px;"></i> @appointment.AppointmentDate.ToString("hh:mm tt", System.Globalization.CultureInfo.InvariantCulture)</div>
+                    </td>
+
+                    <!-- Status Badge -->
+                    <td style="padding: 16px 24px; vertical-align: middle;">
+                        @{
+                            string badgeBg = "#e0f2fe";
+                            string badgeColor = "#0284c7";
+                            if (appointment.Status == AppointmentStatus.Pending) { badgeBg = "#fef3c7"; badgeColor = "#d97706"; }
+                            else if (appointment.Status == AppointmentStatus.Completed) { badgeBg = "#dcfce7"; badgeColor = "#15803d"; }
+                            else if (appointment.Status == AppointmentStatus.Cancelled) { badgeBg = "#fee2e2"; badgeColor = "#b91c1c"; }
+                        }
+                        <span style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 16px; border-radius: 50px; font-size: 13px; font-weight: 600; background-color: @badgeBg; color: @badgeColor;">
+                            <span style="width: 6px; height: 6px; border-radius: 50%; background-color: currentColor;"></span> 
+                            @appointment.Status.ToString()
+                        </span>
+                    </td>
+                </tr>
+            }
+        }
+        else
+        {
+            <tr>
+                <td colspan="4" style="text-align:center; color:#94a3b8; padding:20px;">No appointments scheduled yet</td>
+            </tr>
+        }
+</tbody>
+    </table>
+</div>
+
+                <!-- Department load -->
+               <div class="card">
+    <div class="card-header">
+        <h2>Specialization load</h2>
+    </div>
+    <div class="dept-load">
+        @if (ViewBag.SpecializationLoads != null)
+        {
+            foreach (var item in ViewBag.SpecializationLoads)
+            {
+                <div class="dept-row">
+                    <label>@item.Specialization <span>@item.Percentage%</span></label>
+                    <div class="bar-track">
+                        <div class="bar-fill" style="width: @item.Percentage%"></div>
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <div style="padding: 20px; text-align: center; color: #94a3b8;">No data available</div>
+        }
+    </div>
+        </div>
+    </div>

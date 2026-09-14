@@ -1,0 +1,210 @@
+@model MedicalRecord
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Medical Record Details – Rayaah Clinic</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="~/css/dashboard.css" />
+    <style>
+        .details-grid {
+            display: grid;
+            grid-template-columns: 1fr 340px;
+            gap: 24px;
+            align-items: start;
+        }
+        .hero-banner {
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            border: 1px solid #e8edf3;
+            border-radius: 20px;
+            padding: 24px 28px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 12px rgba(15,23,42,0.04);
+            margin-bottom: 24px;
+        }
+        .info-card {
+            background: #fff;
+            border: 1px solid #e8edf3;
+            border-radius: 18px;
+            padding: 24px;
+            box-shadow: 0 2px 10px rgba(15,23,42,0.04);
+            margin-bottom: 20px;
+        }
+        .info-card h3 {
+            font-size: 15px;
+            font-weight: 800;
+            color: #0f172a;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .data-grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+        .data-item label {
+            display: block;
+            font-size: 11px;
+            font-weight: 700;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+        .data-item span {
+            font-size: 14px;
+            font-weight: 700;
+            color: #1e293b;
+        }
+    </style>
+</head>
+<body>
+<div class="shell">
+
+    @Html.Partial("_Sidebar")
+
+    <!-- Main -->
+    <div class="main">
+      <header class="topbar">
+    <form method="get" asp-controller="MedicalRecords" asp-action="Index" style="flex-grow: 1; display: flex;">
+        <div class="search-bar" style="width: 100%;">
+            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 5 5"/></svg>
+            <input type="search" name="search" value="@Context.Request.Query["search"]" placeholder="Search medical records..." style="width: 100%; border: none; outline: none; background: transparent;" onchange="this.form.submit()" />
+        </div>
+    </form>
+   
+      </header>
+
+      <div class="content">
+        <!-- Navigation Back Button -->
+        <div style="margin-bottom: 12px;">
+            <a asp-controller="MedicalRecords" asp-action="Index" style="text-decoration:none; font-size:13px; font-weight:700; color:#0284c7; display:inline-flex; align-items:center; gap:6px;">
+                <i class="bi bi-arrow-left"></i> Back to Medical Records
+            </a>
+        </div>
+
+        <!-- Top Hero Banner with Record Title and Actions -->
+        <div class="hero-banner">
+            <div style="display:flex; align-items:center; gap:18px;">
+                <div style="width:58px; height:58px; border-radius:16px; background:linear-gradient(135deg, #0d9488 0%, #0f766e 100%); color:#fff; display:grid; place-items:center; font-size:26px; font-weight:800;">
+                    MR
+                </div>
+                <div>
+                    <div style="display:flex; align-items:center; gap:12px; margin-bottom:4px;">
+                        <h1 style="font-size:22px; font-weight:800; color:#0f172a; margin:0;">Record #@Model.Id</h1>
+                        <span style="display:inline-flex; align-items:center; gap:4px; padding:3px 10px; border-radius:12px; background:#dcfce7; color:#15803d; font-size:11px; font-weight:700;">
+                            <i class="bi bi-check-circle-fill"></i> Complete
+                        </span>
+                    </div>
+                    <p style="font-size:13px; color:#64748b; margin:0;">Consultation Record · @Model.CreatedAt.ToString("yyyy-MM-dd HH:mm")</p>
+                </div>
+            </div>
+            <div style="display:flex; gap:10px;">
+                <a asp-controller="MedicalRecords" asp-action="Edit" asp-route-id="@Model.Id" class="reschedule-btn" style="text-decoration:none; height:42px; padding:0 20px; font-size:13px; background:#f0f9ff; border-color:#bae6fd; color:#0369a1; display:inline-flex; align-items:center; gap:6px;">
+                    <i class="bi bi-pencil-square"></i> Edit Record
+                </a>
+            </div>
+        </div>
+
+        @if (Model.Appointment != null)
+        {
+            <div style="margin-bottom: 20px; padding: 16px 20px; background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 12px;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <div style="display: grid; width: 40px; height: 40px; place-items: center; border-radius: 10px; background: #0284c7; color: white; font-weight: 700;">
+                        @(Model.Appointment.Patient?.Name?.Substring(0, 1).ToUpper() ?? "P")
+                    </div>
+                    <div>
+                        <strong style="color: #0c4a6e; font-size: 14px;">@Model.Appointment.Patient?.Name</strong>
+                        <p style="margin: 2px 0 0; color: #0369a1; font-size: 12px;">Dr. @Model.Appointment.Doctor?.Name · @Model.Appointment.AppointmentDate.ToString("yyyy-MM-dd HH:mm")</p>
+                    </div>
+                </div>
+            </div>
+        }
+
+        <!-- Details Grid (Left main cards + Right sidebar cards) -->
+        <div class="details-grid">
+
+            <!-- Left Column -->
+            <div>
+                <!-- Consultation Details Card -->
+                <div class="info-card">
+                    <h3><i class="bi bi-file-medical" style="color:#0d9488;"></i> Consultation Details</h3>
+                    <div style="background:#f8fafc; border:1.5px solid #e2e8f0; border-radius:12px; padding:16px; font-size:13px; color:#334155; line-height:1.6; margin-bottom:16px;">
+                        @Model.Diagnosis
+                    </div>
+                    <div class="data-grid-2">
+                        <div class="data-item">
+                            <label>Record ID</label>
+                            <span>#@Model.Id</span>
+                        </div>
+                        <div class="data-item">
+                            <label>Appointment ID</label>
+                            <span>#@Model.AppointmentId</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Prescription Card -->
+                <div class="info-card">
+                    <h3><i class="bi bi-prescription2" style="color:#0ea5e9;"></i> Prescription</h3>
+                    <div style="background:#f8fafc; border:1.5px solid #e2e8f0; border-radius:12px; padding:16px; font-size:13px; color:#334155; line-height:1.6;">
+                        @Model.Prescription
+                    </div>
+                </div>
+
+                <!-- Doctor Notes Card -->
+                <div class="info-card">
+                    <h3><i class="bi bi-clipboard2-pulse" style="color:#0ea5e9;"></i> Doctor Notes</h3>
+                    <div style="background:#f8fafc; border:1.5px solid #e2e8f0; border-radius:12px; padding:16px; font-size:13px; color:#334155; line-height:1.6;">
+                        @Model.DoctorNotes
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column (Sidebar Summary Cards) -->
+            <div>
+                <!-- Patient & Doctor Card -->
+                <div class="info-card">
+                    <h3><i class="bi bi-people" style="color:#0ea5e9;"></i> Patient & Doctor</h3>
+                    <div style="display:flex; flex-direction:column; gap:12px;">
+                        <div class="data-item">
+                            <label>Patient</label>
+                            <span>@(Model.Appointment?.Patient?.Name ?? "Unknown")</span>
+                        </div>
+                        <div class="data-item">
+                            <label>Doctor</label>
+                            <span>@(Model.Appointment?.Doctor?.Name ?? "Unknown")</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Timestamp Card -->
+                <div class="info-card">
+                    <h3><i class="bi bi-clock-history" style="color:#0ea5e9;"></i> Timestamp</h3>
+                    <div style="display:flex; flex-direction:column; gap:12px;">
+                        <div class="data-item">
+                            <label>Created Date</label>
+                            <span>@Model.CreatedAt.ToString("yyyy-MM-dd")</span>
+                        </div>
+                        <div class="data-item">
+                            <label>Created Time</label>
+                            <span>@Model.CreatedAt.ToString("HH:mm")</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+      </div>
+    </div>
+
+</div>
+</body>
+</html>

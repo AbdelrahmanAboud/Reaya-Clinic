@@ -1,0 +1,93 @@
+@model MedicalRecord
+@{
+    var appointment = ViewBag.Appointment as Appointment;
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Create Medical Record – Rayaah Clinic</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="~/css/dashboard.css" />
+</head>
+<body>
+<div class="shell">
+
+    @Html.Partial("_Sidebar")
+
+    <!-- Main -->
+    <div class="main">
+      <header class="topbar">
+    <form method="get" asp-controller="MedicalRecords" asp-action="Index" style="flex-grow: 1; display: flex;">
+        <div class="search-bar" style="width: 100%;">
+            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 5 5"/></svg>
+            <input type="search" name="search" value="@Context.Request.Query["search"]" placeholder="Search medical records..." style="width: 100%; border: none; outline: none; background: transparent;" onchange="this.form.submit()" />
+        </div>
+    </form>
+    
+      </header>
+
+      <div class="content">
+        <div style="margin-bottom: 8px;">
+            <a asp-controller="MedicalRecords" asp-action="Index" style="text-decoration:none; font-size:13px; font-weight:700; color:#0284c7; display:inline-flex; align-items:center; gap:6px;">
+                <i class="bi bi-arrow-left"></i> Back to Medical Records
+            </a>
+        </div>
+
+        <div class="page-title">
+            <h1>Create Medical Record</h1>
+            <p>Record consultation details for patient @(appointment?.Patient?.Name ?? "Unknown")</p>
+        </div>
+
+        @if (appointment != null)
+        {
+            <div style="margin-bottom: 20px; padding: 16px 20px; background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 12px;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <div style="display: grid; width: 40px; height: 40px; place-items: center; border-radius: 10px; background: #0284c7; color: white; font-weight: 700;">
+                        @(appointment.Patient?.Name?.Substring(0, 1).ToUpper() ?? "P")
+                    </div>
+                    <div>
+                        <strong style="color: #0c4a6e; font-size: 14px;">@appointment.Patient?.Name</strong>
+                        <p style="margin: 2px 0 0; color: #0369a1; font-size: 12px;">Dr. @appointment.Doctor?.Name · @appointment.AppointmentDate.ToString("yyyy-MM-dd HH:mm")</p>
+                    </div>
+                </div>
+            </div>
+        }
+
+<form class="form-card" method="post" asp-controller="MedicalRecords" asp-action="CurrentCreate" asp-route-appointmentId="@(appointment?.Id ?? 0)">
+    <div asp-validation-summary="ModelOnly" class="text-danger" style="margin-bottom:12px; font-size:12px; font-weight:700; list-style:none;"></div>
+
+    <div class="field">
+        <label asp-for="Diagnosis">Diagnosis</label>
+        <textarea asp-for="Diagnosis" rows="4" placeholder="Enter diagnosis..."></textarea>
+        <span asp-validation-for="Diagnosis" class="text-danger" style="font-size:11px;"></span>
+    </div>
+
+    <div class="field">
+        <label asp-for="Prescription">Prescription</label>
+        <textarea asp-for="Prescription" rows="6" placeholder="Enter prescription details..."></textarea>
+        <span asp-validation-for="Prescription" class="text-danger" style="font-size:11px;"></span>
+    </div>
+
+    <div class="field">
+        <label asp-for="DoctorNotes">Doctor Notes</label>
+        <textarea asp-for="DoctorNotes" rows="4" placeholder="Additional doctor notes..."></textarea>
+        <span asp-validation-for="DoctorNotes" class="text-danger" style="font-size:11px;"></span>
+    </div>
+
+    <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px; padding-top: 16px; border-top: 1px solid #f1f5f9;">
+        <a asp-controller="MedicalRecords" asp-action="Index" style="text-decoration:none; display:inline-flex; align-items:center; justify-content:center; height:44px; padding:0 24px; border-radius:12px; border:1.5px solid #e2e8f0; background:#fff; font-size:14px; font-weight:700; color:#64748b;">
+            Cancel
+        </a>
+        <button type="submit" class="create-btn" style="width:auto; padding:0 32px; border:none; cursor:pointer;">
+            <i class="bi bi-check-circle-fill"></i> Create Medical Record
+        </button>
+    </div>
+</form>
+      </div>
+    </div>
+</div>
+</body>
+</html>

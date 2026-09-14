@@ -1,0 +1,356 @@
+@model List<MedicalRecord>
+@{
+    var patient = ViewBag.Patient as Patient;
+    string initials = "PT";
+    if (!string.IsNullOrEmpty(patient?.Name))
+    {
+        var nameParts = patient.Name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (nameParts.Length >= 2)
+        {
+            initials = $"{char.ToUpper(nameParts[0][0])}{char.ToUpper(nameParts[1][0])}";
+        }
+        else if (nameParts.Length == 1)
+        {
+            initials = nameParts[0].Substring(0, Math.Min(2, nameParts[0].Length)).ToUpper();
+        }
+    }
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>My Medical History - Patient Portal</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="~/css/dashboard.css" />
+    <style>
+        body {
+            background-color: #f8fafc;
+            font-family: 'Inter', sans-serif;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Outfit', sans-serif;
+        }
+        .page-title {
+            font-size: 32px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #1e293b, #3b82f6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 8px;
+        }
+        .page-subtitle {
+            color: #64748b;
+            font-size: 15px;
+            font-weight: 400;
+            margin-bottom: 30px;
+        }
+        
+        /* Timeline Container */
+        .timeline {
+            position: relative;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px 0;
+        }
+        
+        /* The actual timeline (the vertical ruler) */
+        .timeline::after {
+            content: '';
+            position: absolute;
+            width: 4px;
+            background: linear-gradient(to bottom, #e2e8f0, #cbd5e1, #e2e8f0);
+            top: 0;
+            bottom: 0;
+            left: 40px;
+            border-radius: 4px;
+        }
+        
+        /* Timeline Item */
+        .timeline-item {
+            position: relative;
+            margin-bottom: 40px;
+            padding-left: 90px;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: slideUpFade 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        
+        @@keyframes slideUpFade {
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Timeline Dot */
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: 31px;
+            top: 24px;
+            width: 22px;
+            height: 22px;
+            background-color: #ffffff;
+            border: 4px solid #3b82f6;
+            border-radius: 50%;
+            z-index: 1;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .timeline-item:hover::before {
+            background-color: #3b82f6;
+            box-shadow: 0 0 0 6px rgba(59, 130, 246, 0.2);
+            transform: scale(1.1);
+        }
+
+        /* Timeline Content Card */
+        .timeline-content {
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            position: relative;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            overflow: hidden;
+        }
+
+        .timeline-content:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        
+        /* Card gradient accent */
+        .timeline-content::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 6px;
+            background: linear-gradient(180deg, #3b82f6, #8b5cf6);
+            border-top-left-radius: 16px;
+            border-bottom-left-radius: 16px;
+        }
+        
+        .record-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 20px;
+        }
+        
+        .record-title-area {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .doctor-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+            border: 1px solid #cbd5e1;
+            display: grid;
+            place-items: center;
+            color: #475569;
+            font-weight: 600;
+            font-size: 16px;
+            font-family: 'Outfit', sans-serif;
+            box-shadow: inset 0 2px 4px rgba(255,255,255,0.5);
+        }
+
+        .record-diagnosis {
+            font-family: 'Outfit', sans-serif;
+            font-size: 20px;
+            font-weight: 700;
+            color: #0f172a;
+            margin: 0 0 4px 0;
+        }
+
+        .record-doctor {
+            font-size: 14px;
+            color: #64748b;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .record-doctor i {
+            color: #3b82f6;
+        }
+
+        .record-date {
+            background: #f1f5f9;
+            color: #475569;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            border: 1px solid #e2e8f0;
+        }
+
+        /* Detail Boxes */
+        .detail-box {
+            border-radius: 12px;
+            padding: 16px;
+            margin-top: 16px;
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+        }
+        
+        .detail-box-bg {
+            position: absolute;
+            inset: 0;
+            opacity: 0.05;
+            z-index: -1;
+            background-image: radial-gradient(circle at 100% 0%, currentColor 0%, transparent 50%);
+        }
+
+        .prescription-box {
+            background-color: #f0fdfa;
+            border: 1px solid #ccfbf1;
+            color: #0f766e;
+        }
+
+        .notes-box {
+            background-color: #fefce8;
+            border: 1px solid #fef08a;
+            color: #a16207;
+        }
+
+        .detail-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-family: 'Outfit', sans-serif;
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .detail-text {
+            font-size: 14px;
+            line-height: 1.6;
+            margin: 0;
+            color: #334155;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 80px 20px;
+            background: #ffffff;
+            border-radius: 24px;
+            border: 1px dashed #cbd5e1;
+            max-width: 600px;
+            margin: 40px auto;
+        }
+        
+        .empty-icon {
+            font-size: 64px;
+            background: linear-gradient(135deg, #cbd5e1, #94a3b8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 16px;
+        }
+
+    </style>
+</head>
+<body>
+<div class="shell">
+
+    <!-- Sidebar -->
+    @Html.Partial("_Sidebar")
+
+    <!-- Main -->
+    <div class="main">
+        <header class="topbar">
+            <div style="flex-grow: 1;"></div>
+        </header>
+
+        <div class="content" style="padding-top: 10px;">
+
+            <!-- Page header -->
+            <div style="max-width: 900px; margin: 0 auto; text-align: center; padding: 20px 0 40px;">
+                <h1 class="page-title">My Medical Journey</h1>
+                <p class="page-subtitle">A comprehensive timeline of your health consultations and treatments.</p>
+            </div>
+
+            <!-- Medical Records Timeline -->
+            @if (Model != null && Model.Any())
+            {
+                <div class="timeline">
+                    @{ int delay = 0; }
+                    @foreach (var record in Model.OrderByDescending(m => m.CreatedAt))
+                    {
+                        var animDelay = $"{delay * 0.15}s";
+                        
+                        <div class="timeline-item" style="animation-delay: @animDelay;">
+                            <div class="timeline-content">
+                                <div class="record-header">
+                                    <div class="record-title-area">
+                                        <div class="doctor-avatar">
+                                            DR
+                                        </div>
+                                        <div>
+                                            <h3 class="record-diagnosis">@record.Diagnosis</h3>
+                                            <p class="record-doctor">
+                                                <i class="bi bi-person-badge-fill"></i>
+                                                Dr. @record.Appointment?.Doctor?.Name
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div class="record-date">
+                                        <i class="bi bi-calendar3"></i>
+                                        @record.CreatedAt.ToString("MMM dd, yyyy", System.Globalization.CultureInfo.InvariantCulture)
+                                    </div>
+                                </div>
+                                
+                                @if (!string.IsNullOrEmpty(record.Prescription))
+                                {
+                                    <div class="detail-box prescription-box">
+                                        <div class="detail-box-bg" style="color: #0d9488;"></div>
+                                        <div class="detail-title" style="color: #0f766e;">
+                                            <i class="bi bi-capsule"></i> Prescription
+                                        </div>
+                                        <p class="detail-text">@record.Prescription</p>
+                                    </div>
+                                }
+                                
+                                @if (!string.IsNullOrEmpty(record.DoctorNotes))
+                                {
+                                    <div class="detail-box notes-box">
+                                        <div class="detail-box-bg" style="color: #ca8a04;"></div>
+                                        <div class="detail-title" style="color: #a16207;">
+                                            <i class="bi bi-journal-medical"></i> Doctor's Notes
+                                        </div>
+                                        <p class="detail-text">@record.DoctorNotes</p>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                        delay++;
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="empty-state">
+                    <i class="bi bi-clipboard2-pulse empty-icon"></i>
+                    <h3 style="font-size: 24px; color: #0f172a; margin-bottom: 8px;">No records yet</h3>
+                    <p style="color: #64748b; font-size: 15px; margin: 0;">Your medical history will appear here once you complete a consultation.</p>
+                </div>
+            }
+
+        </div>
+    </div>
+
+</div>
+</body>
+</html>
