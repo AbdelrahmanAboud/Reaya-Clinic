@@ -1,0 +1,18 @@
+{
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  },
+  "AllowedHosts": "*",
+  "ConnectionStrings": {
+    "AppDbContext": "Server=(localdb)\\mssqllocaldb;Database=AppDbContext;Trusted_Connection=True;MultipleActiveResultSets=true"
+  },
+  "EmailJs": {
+    "ServiceId": "YOUR_SERVICE_ID",
+    "TemplateId": "YOUR_TEMPLATE_ID",
+    "PublicKey": "YOUR_PUBLIC_KEY",
+    "PrivateKey": "YOUR_PRIVATE_KEY"
+  }
+}
