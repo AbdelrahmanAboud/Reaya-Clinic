@@ -25,7 +25,6 @@
 - [Configuration](#-configuration)
 - [Usage](#-usage)
 - [User Roles](#-user-roles--permissions)
-- [Screenshots](#-screenshots)
 - [Contributing](#-contributing)
 - [License](#-license)
 - [Contact](#-contact)
@@ -222,7 +221,7 @@ Create an admin account through the registration process or use database seeding
 1. **User Management**: Create and manage user accounts
 2. **Role Assignment**: Assign roles to users
 3. **System Configuration**: Configure system settings
-4. ** oversight**: Monitor all system activities
+4. **Oversight**: Monitor all system activities
 
 ---
 
@@ -237,20 +236,65 @@ Create an admin account through the registration process or use database seeding
 
 ---
 
-## 📸 Screenshots
+## 🤝 Contributing
 
-### Home Page
-*[Add screenshot of home page]*
-The landing page providing an overview of clinic services and doctor information.
+Contributions are what make the open-source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
 
-### Patient Portal
-*[Add screenshot of patient portal]*
-Patient dashboard for managing appointments and viewing medical history.
+### How to Contribute
 
-### Doctor Dashboard
-*[Add screenshot of doctor dashboard]*
-Doctor interface for managing patients and medical records.
+1. **Fork the Project**
+2. **Create your Feature Branch** (`git checkout -b feature/AmazingFeature`)
+3. **Commit your Changes** (`git commit -m 'Add some AmazingFeature'`)
+4. **Push to the Branch** (`git push origin feature/AmazingFeature`)
+5. **Open a Pull Request**
 
-### Appointment Booking
-*[Add screenshot of appointment booking]*
-Appointment booking interface with doctor selection and time slot availability.
+### Development Guidelines
+
+- Follow the existing code style and conventions
+- Write clean, commented code
+- Test your changes thoroughly
+- Update documentation as needed
+
+---
+
+## 📄 License
+
+Distributed under the MIT License. See `LICENSE` for more information.
+
+---
+
+## 👨‍💻 Author
+
+**Abdelrahman Aboud Mohamed Aboud**
+
+- **University**: Helwan University
+- **Faculty**: Engineering
+- **Department**: Computer Engineering
+- **Year**: Second Year
+- **Submitted to**: Dr. Mohamed Abdellatif
+
+---
+
+## 📞 Contact
+
+- **GitHub**: [@AbdelrahmanAboud](https://github.com/AbdelrahmanAboud)
+- **Project Link**: [https://github.com/AbdelrahmanAboud/Reaya-Clinic](https://github.com/AbdelrahmanAboud/Reaya-Clinic)
+
+---
+
+## 🙏 Acknowledgments
+
+- **Dr. Mohamed Abdellatif** - Project supervisor and guidance
+- **Helwan University** - Academic institution
+- **ASP.NET Core Team** - Amazing framework and documentation
+- **Bootstrap Team** - Excellent UI framework
+
+---
+
+<div align="center">
+
+**Built with ❤️ for modern healthcare management**
+
+⭐ **Star this project if you find it helpful!**
+
+</div>
