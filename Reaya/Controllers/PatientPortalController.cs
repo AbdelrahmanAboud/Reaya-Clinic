@@ -5,6 +5,8 @@ using Microsoft.EntityFrameworkCore;
 using Reaya.Data;
 using Reaya.Models;
 using System.Security.Claims;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 
 namespace Reaya.Controllers
 {
@@ -14,10 +16,12 @@ namespace Reaya.Controllers
         AppDbContext context = new AppDbContext();
 
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly IWebHostEnvironment _webHostEnvironment;
 
-        public PatientPortalController(UserManager<ApplicationUser> userManager)
+        public PatientPortalController(UserManager<ApplicationUser> userManager, IWebHostEnvironment webHostEnvironment)
         {
             _userManager = userManager;
+            _webHostEnvironment = webHostEnvironment;
         }
 
         public IActionResult MyAppointments()
@@ -220,7 +224,7 @@ namespace Reaya.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult UpdateProfile(Patient patient)
+        public IActionResult UpdateProfile(Patient patient, IFormFile? ImageFile)
         {
             if (!User.Identity.IsAuthenticated)
             {
@@ -253,6 +257,34 @@ namespace Reaya.Controllers
                 existingPatient.DateOfBirth = patient.DateOfBirth;
                 existingPatient.Address = patient.Address;
                 existingPatient.BloodType = patient.BloodType;
+
+                // Handle image upload
+                if (ImageFile != null)
+                {
+                    // Store old image path for deletion
+                    string oldImagePath = existingPatient.ImagePath;
+
+                    // Save new image
+                    Guid imageGuid = Guid.NewGuid();
+                    string imageExtension = System.IO.Path.GetExtension(ImageFile.FileName);
+                    string imageNewName = imageGuid + imageExtension;
+                    existingPatient.ImagePath = "\\images\\" + imageNewName;
+                    string imageFullPath = _webHostEnvironment.WebRootPath + existingPatient.ImagePath;
+                    using (var imageFileStream = new System.IO.FileStream(imageFullPath, System.IO.FileMode.Create))
+                    {
+                        ImageFile.CopyTo(imageFileStream);
+                    }
+
+                    // Delete old image if it's not the default one
+                    if (!string.IsNullOrEmpty(oldImagePath) && oldImagePath != "\\images\\user_default.jpg")
+                    {
+                        string oldImageFullPath = _webHostEnvironment.WebRootPath + oldImagePath;
+                        if (System.IO.File.Exists(oldImageFullPath))
+                        {
+                            System.IO.File.Delete(oldImageFullPath);
+                        }
+                    }
+                }
 
                 context.Patients.Update(existingPatient);
                 context.SaveChanges();

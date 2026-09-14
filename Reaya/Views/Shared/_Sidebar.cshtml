@@ -2,6 +2,7 @@
 @using Reaya.Data
 @using Reaya.Models
 @inject UserManager<ApplicationUser> SidebarUserManager
+@inject AppDbContext context
 @{
     var sidebarType = ViewData["SidebarType"] as string ?? "admin";
     var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
@@ -10,6 +11,7 @@
     // Always fetch the real logged-in user's data from Identity
     string userName = "User";
     string userRole = "Admin";
+    string userImagePath = null;
 
     if (User.Identity?.IsAuthenticated == true)
     {
@@ -22,6 +24,24 @@
                 : (currentUser.Email ?? "User");
             var roles = SidebarUserManager.GetRolesAsync(currentUser).GetAwaiter().GetResult();
             userRole = roles.FirstOrDefault() ?? "Admin";
+
+            // Try to get the user's image path based on their role
+            if (userRole == "Patient")
+            {
+                var patient = context.Patients.FirstOrDefault(p => p.UserId == currentUser.Id);
+                if (patient != null)
+                {
+                    userImagePath = patient.ImagePath;
+                }
+            }
+            else if (userRole == "Doctor")
+            {
+                var doctor = context.Doctors.FirstOrDefault(d => d.UserId == currentUser.Id);
+                if (doctor != null)
+                {
+                    userImagePath = doctor.ImagePath;
+                }
+            }
         }
     }
 
@@ -134,7 +154,18 @@ else if (sidebarType == "patient")
 }
     <div class="staff-card" style="display: flex; justify-content: space-between; align-items: center;">
         <div style="display: flex; align-items: center; gap: 12px;">
-            <span class="staff-avatar">@userInitials</span>
+            @if (!string.IsNullOrEmpty(userImagePath) && userImagePath != "\\images\\user_default.jpg")
+            {
+                <span class="staff-avatar with-image">
+                    <img src="@(userImagePath.Replace("\\", "/"))" alt="@userName" />
+                </span>
+            }
+            else
+            {
+                <span class="staff-avatar with-image">
+                    <img src="~/images/user_default.jpg" alt="@userName" />
+                </span>
+            }
             <span style="display: flex; flex-direction: column;">
                 <strong>@userName</strong>
                 <small>@userRole</small>
